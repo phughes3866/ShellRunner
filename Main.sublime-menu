@@ -1,0 +1,130 @@
+[
+	    // {
+        // "id": "tools",
+        // "children":
+ //        [
+	// {
+	// 	"id" : "ShellRunnerToolsMenu",
+	// 	"caption": "Sphinx Refmate",
+	// 	"children":
+	// 	[
+	// 		{
+	// 			"id" : "InsertLocRefFromObjectsInv",
+	// 			"caption": "Insert Links To Current Project",
+	// 			"mnemonic" : "L",
+	// 			"children":
+	// 			[
+	// 			{
+	// 				"caption" : "All Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": true},
+	// 				"mnemonic" : "A"
+	// 			},
+	// 			{
+	// 				"caption" : "Page (doc) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": true, "refTypeToGet": "doc"},
+	// 				"mnemonic" : "P"
+	// 			},
+	// 			{
+	// 				"caption" : "Section (label) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": true, "refTypeToGet": "label"},
+	// 				"mnemonic" : "l"
+	// 			},
+	// 			{
+	// 				"caption" : "Glossary (term) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": true, "refTypeToGet": "term"},
+	// 				"mnemonic" : "G"
+	// 			},
+	// 			{
+	// 				"caption" : "Insert reST Citation Reference",
+	// 				"command" : "cite_from_biblio_files",
+	// 				"mnemonic" : "C"
+	// 			},
+	// 			{
+	// 				"caption" : "Insert reST Substitution",
+	// 				"command" : "insert_rst_epilog_substitution",
+	// 				"mnemonic" : "S"
+	// 			}
+	// 			]
+	// 		},
+	// 		{
+	// 			"id" : "InsertXRefFromObjectsInv",
+	// 			"caption": "Insert Links To Intersphinx Projects",
+	// 			"mnemonic" : "x",
+	// 			"children":
+	// 			[
+	// 			{
+	// 				"caption" : "All Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": false},
+	// 				"mnemonic" : "A"
+	// 			},
+	// 			{
+	// 				"caption" : "Page (doc) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": false, "refTypeToGet": "doc"},
+	// 				"mnemonic" : "P"
+	// 			},
+	// 			{
+	// 				"caption" : "Section (label) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": false, "refTypeToGet": "label"},
+	// 				"mnemonic" : "l"
+	// 			},
+	// 			{
+	// 				"caption" : "Glossary (term) Links",
+	// 				"command" : "insert_sphinx_links", "args": {"withinProj": false, "refTypeToGet": "term"},
+	// 				"mnemonic" : "G"
+	// 			}
+	// 			]
+	// 		},
+	// 	]
+	// }
+ //        ]
+    // },
+    {
+        // "caption": "Preferences",
+        // "mnemonic": "n",
+        "id": "preferences",
+        "children":
+        [
+            {
+                // "caption": "Package Settings",
+                // "mnemonic": "P",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "id": "ShellRunner",
+                        "caption": "Shell Runner",
+                        "children":
+                        [
+                        	{
+                        	      "caption": "Settings",
+                        	      "command": "edit_settings", "args":
+                        	      {
+                        	          "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
+                        	          "default": "// ShellRunner User Settings (these settings override those in .../ShellRunner/ShellRunner.sublime-settings)\n{\n\t$0\n}\n"
+                        	      }
+                        	  },
+                        	{
+                        	      "caption": "Key Bindings",
+                        	      "command": "edit_settings", "args":
+                        	      {
+                        	          "base_file": "${packages}/ShellRunner/keymaps/Default ($platform).sublime-keymap",
+                        	          "default": "${packages}/User/Default ($platform).sublime-keymap"
+                        	      }
+                        	  },
+                        	{
+                        	      "caption": "Shell Commands",
+                        	      "command": "edit_shellrunner_commands", "args":
+                        	      {
+                        	          "base_file": "${packages}/ShellRunner/ExampleSideBar.sublime-menu",
+                        	          "user_file": "${packages}/User/ShellRunner/Side Bar.sublime-menu",
+                        	          "default": "[\n\t{\n\t\"id\": \"shell-runner-shell-commands\",\n\t\"children\": [\n\t// Insert User Defined ShellRunner Commands Below\n\t$0\n\n\t]\n\t}\n]\n"
+                        	      }
+                        	  }
+
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

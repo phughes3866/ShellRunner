@@ -1,0 +1,50 @@
+[
+
+	{   "id": "shell_runner_sidebar", "caption": "-" },
+	{
+		"caption": "Open Terminal Here",
+		"command": "open_terminal",
+		"args": { }
+	},
+
+	{
+		"caption": "Shell Commands",
+		"id": "shell_runner_sidebar_menu",
+
+		"children": [
+			{
+				"caption": "Edit Shell Commands…",
+				"id": "shell-runner-edit-commands",
+				"command": "edit_shellrunner_commands"
+			},
+			{"caption": "-", "id": "shell_runner_user_commands_below_here"},
+			{
+				"caption": "totp in terminal",
+				"command": "shell_exec_run_ph",
+				"args": { "command": "/usr/bin/urxvt -e /usr/bin/bash -c '/usr/local/phscripts/totp; /usr/bin/bash'", "output": "none" }
+				// "args": { "command": "/usr/bin/urxvt -e bash -c '/usr/local/phscripts/totp; read -p \"Press enter to continue\"'", "output": "none" }
+				// "args": { "command": "/usr/bin/urxvt", "output": "none" }
+			},
+			{
+				"caption": "echo hello to new file",
+				"command": "shell_exec_run_ph",
+				"args": { "command": "echo hello", "output": "file" }
+			},
+			{
+				"caption": "echo hello to nowhere",
+				"command": "shell_exec_run_ph",
+				"args": { "command": "echo hello", "output": "none" }
+			},
+			{
+				"caption": "echo hello and insert",
+				"command": "shell_exec_run_ph",
+				"args": { "command": "echo hello", "output": "insert" }
+			},
+			{
+				"caption": "Shell Experiment 3",
+				"command": "shell_exec_run_ph",
+				"args": { "command": "ps", "output": "panel"}
+			},
+		]
+	},
+]

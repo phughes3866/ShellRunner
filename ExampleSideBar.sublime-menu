@@ -1,0 +1,16 @@
+[{"id": "shell_runner_sidebar_menu",	"children": [
+	{ "caption" : "-", "id": "shell_runner_user_commands_below_here"},
+	// This Example ShellRunner sidebar menu file is not active
+	// It is intended to be used as a template from which users can
+	// `- build their own active 'Side Bar.sublime-menu' file
+
+	// Note: The commands below are geared to Linux and the
+	// `- Bourne Again Shell (bash).
+
+	{
+		"caption": "ps (output to panel)",
+		"command": "shell_exec_run_ph",
+		"args": { "command": "ps", "output": "panel"}
+	}
+
+]}]

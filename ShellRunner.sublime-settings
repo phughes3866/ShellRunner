@@ -6,6 +6,14 @@
   // otherwise set to the terminal program you wish to run
   "open_terminal_cmd": "/usr/bin/urxvt",
 
+  // default output for shell_run_text_command, one of: 'newTab', 'sublConsole', 'cursorInsert'
+  "outputTo": "newTab",
+
+  "initChangeDir": true,
+  "cmdCombineOutputStreams": false,
+  "textCmdStopOnErr": true,
+  "textCmdTimeout": 10,
+
   // Shell executable: "/bin/bash", "/bin/sh", "/usr/bin/zsh"...
   "shell_exec_executable": "/bin/bash",
 

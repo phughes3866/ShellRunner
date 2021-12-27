@@ -16,6 +16,15 @@ plugin_canon_name = 'ShellRunner'
 def showShRunnerError(errormsg):
     sublime.error_message("{} plugin error::\n\n{}".format(plugin_canon_name, errormsg))
 
+def splitCommand(cmdStr):
+    return shlex.split(cmdStr, posix=True)
+
+def retrieveSetting(settingName, primaryDict, secondaryDict={}):
+    if secondaryDict:
+        return primaryDict.get(settingName, secondaryDict.get(settingName))
+    else:
+        return primaryDict.get(settingName)
+
 class DoViewInsertCommand(sublime_plugin.TextCommand):
   def run(self, edit, pos, text):
     # sublime.message_dialog('trying to insert at poz{} the text:{}'.format(pos, text))
@@ -40,10 +49,6 @@ class EditShellrunnerCommandsCommand(sublime_plugin.WindowCommand):
         }
         self.window.run_command('edit_settings', args)
 
-class TerminalRunCmdCommand(sublime_plugin.WindowCommand):
-    def run(self, **kwargs):
-        self.args = kwargs
-
 class OpenTerminalCommand(sublime_plugin.WindowCommand):
     def __init__(self, window):
         super().__init__(window)
@@ -59,99 +64,113 @@ class OpenTerminalCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
         if self.have_command:
             change_dir = sublime.active_window().extract_variables().get('file_path', '.')
-            cmd_array = shlex.split(self.shrunner_settings.get("open_terminal_cmd"), posix=True)
+            cmd_array = splitCommand(self.shrunner_settings.get("open_terminal_cmd"))
             subprocess.Popen(cmd_array, cwd=change_dir)
 
-class ShellExecRunPhCommand(sublime_plugin.WindowCommand):
+
+class ShellSpawnCommandCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
-        self.args = kwargs
-        sublime.message_dialog('args = {}'.format(self.args))
+        self.cmdArgs = kwargs
+        sublime.message_dialog('args = {}'.format(self.cmdArgs))
         sublSettings = self.window.extract_variables()
         subl_top_folder_path = sublSettings.get("folder")
-        shrunner_settings = sublime.load_settings(plugin_settings_file)
+        self.shrunner_settings = sublime.load_settings(plugin_settings_file)
         proj_plugin_settings = sublime.active_window().active_view().settings().get(plugin_canon_name, {})
         # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
-        shrunner_settings.update(proj_plugin_settings)
-        self.runcmd = self.args.get("command")
+        self.shrunner_settings.update(proj_plugin_settings)
+        self.runcmd = retrieveSetting("command", self.cmdArgs)
         if not self.runcmd:
             showShRunnerError("No command defined.")
             return
-
-        # if args.get("format"):
-        #   command = args["format"].replace('${input}', command)
-
-        regexp = re.compile(r'\${[a-zA-Z_]+}')
-        if regexp.search(self.runcmd):
-            # print('matched')
-            for region in self.window.active_view().sel():
-                (row,col) = self.window.active_view().rowcol(self.window.active_view().sel()[0].begin())
-
-                self.runcmd = self.runcmd.replace('${row}', str(row+1))
-                self.runcmd = self.runcmd.replace('${region}', self.window.active_view().substr(region))
-                # break as we only take initial selection (not multi)
-                break
-
-            # packages, platform, file, file_path, file_name, file_base_name,
-            # file_extension, folder, project, project_path, project_name,
-            # project_base_name, project_extension.
-            self.runcmd = sublime.expand_variables(self.runcmd, sublSettings)
-
-        # sublime.message_dialog("self.runcmd is: {}".format(self.runcmd))
-
-        # bashCommand = "ls -la"
-        # process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        # output, error = process.communicate()
-        # from subprocess import check_output
-        # output = subprocess.check_output(bashCommand.split())
-        # output = output.decode("utf-8") 
-        # sublime.message_dialog('output={}, ---error={}'.format(output, error))
-        # sublime.message_dialog('type={}, output={}'.format(type(cmd_output), cmd_output))
-
-        self.output_dest = self.args.get("output")
-        if self.output_dest in ['file', 'panel', 'insert']:
-            cmd_output = subprocess.check_output(self.runcmd.split(), encoding='UTF-8')
-            if self.output_dest == "file":
-                self.output_file = sublime.active_window().new_file()
-                self.output_file.set_name("ShellRunner Output")
-                self.output_file.run_command("do_view_insert", {'pos': self.output_file.size(), "text": cmd_output})
-            elif self.output_dest == "panel":
-                sublime.active_window().run_command('show_panel', {"panel": "console", "toggle": False})
-                # sys.stdout.write(cmd_output)
-                print (cmd_output)
-            elif self.output_dest == "insert":
-                self.window.active_view().run_command('insert', {"characters": cmd_output})
+        self.runcmd = sublime.expand_variables(self.runcmd, sublSettings)
+        cmd_array = splitCommand(self.runcmd)
+        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, self.shrunner_settings)
+        if not isinstance(doChgDir, bool):
+            showShRunnerError("Settings error: 'initChangeDir' must be defined True or False, not [{}]".format(doChgDir))
+            return
+        if doChgDir:
+            change_dir = sublime.active_window().extract_variables().get('file_path', '.')
         else:
-            cmd_array = shlex.split(self.runcmd, posix=True)
-            subprocess.Popen(cmd_array)
-            print ("ShellRunner spawned: {}".format(self.runcmd))
+            change_dir = "."
+        subprocess.Popen(cmd_array, cwd=change_dir)
+        print ("ShellRunner spawned: {}".format(self.runcmd))
 
-        # self.output_file.set_scratch(True)
-        # an_edit = self.output_file().begin_edit()
-        # self.output_file().insert(edit, self.output_file().sel()[0].begin(), "honey happiness")
-        # self.output_file.insert(an_edit, 0, 'Hello')
-        # self.output_file().end_edit(an_edit)
-        # self.window.active_view().run_command("do_view_insert",{"text": output})
-        # edit = self.window.active_view().begin_edit()
-        # self.window.active_view().insert(edit, self.window.active_view().sel()[0].begin(), "howzy")
-        # self.window.active_view().end_edit(edit)
-        # window = self.output_file.window()
-        # window.focus_view(self.output_file)
-        # self.output_file.run_command("insert",{"characters": output})
-        # window.focus_view(self.output_file)
-        # self.output_file.run_command("insert",{"characters": output})
-        # self.view.insert(edit, pos, text)
-        # sublime_shell_source = ''
+class ShellRunTextCommandCommand(sublime_plugin.WindowCommand):
 
-        # sh_file_settings = ShellExec.get_setting('load_sh_file', args, True)
-        # sh_file_shortcut = ShellExec.get_setting('load_sh_file', args, False)
+    def run(self, **kwargs):
+        self.cmdArgs = kwargs
+        sublime.message_dialog('args = {}'.format(self.cmdArgs))
+        sublSettings = self.window.extract_variables()
+        subl_top_folder_path = sublSettings.get("folder")
+        self.shrunner_settings = sublime.load_settings(plugin_settings_file)
+        proj_plugin_settings = sublime.active_window().active_view().settings().get(plugin_canon_name, {})
+        # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
+        self.shrunner_settings.update(proj_plugin_settings)
+        self.runcmd = retrieveSetting("command", self.cmdArgs)
+        if not self.runcmd:
+            showShRunnerError("No command defined.")
+            return
+        self.output_dest = retrieveSetting("outputTo", self.cmdArgs, self.shrunner_settings)
+        if not self.output_dest in ['newTab', 'sublConsole', 'cursorInsert']:
+            showShRunnerError("'outputTo' is incorrectly defined in settings. [{}] is invalid.".format(self.output_dest))
+            return
 
-        # sublime_shell_source = ShellExec.load_sh_file(sublime_shell_source, sh_file_settings, args)
+        self.runcmd = sublime.expand_variables(self.runcmd, sublSettings)
 
-        # if sh_file_settings != sh_file_shortcut:
-        #   sublime_shell_source = ShellExec.load_sh_file(sublime_shell_source, sh_file_shortcut, args)
+        # cmd_output = subprocess.check_output(splitCommand(self.runcmd), encoding='UTF-8')
+        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, self.shrunner_settings)
+        if not isinstance(doChgDir, bool):
+            showShRunnerError("Settings error: 'initChangeDir' must be defined True or False, not [{}]".format(doChgDir))
+            return
+        if doChgDir:
+            change_dir = sublime.active_window().extract_variables().get('file_path', '.')
+        else:
+            change_dir = "."
 
-        # if ShellExec.get_setting('debug', args):
-            # print('new Thread')
+        combineStreams = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, self.shrunner_settings)
+        if not isinstance(combineStreams, bool):
+            showShRunnerError("Settings error: 'cmdCombineOutputStreams' must be defined True or False, not [{}]".format(combineStreams))
+            return
+        if combineStreams:
+            errDest = subprocess.STDOUT
+        else:
+            errDest = subprocess.PIPE
 
-        # t = Thread(target=ShellExec.execute_shell_command, args=(sublime_shell_source, command, pure_command, args))
-        # t.start()
+        timeoutSecs = retrieveSetting("textCmdTimeout", self.cmdArgs, self.shrunner_settings)
+        try:
+            cmdRes = subprocess.run(splitCommand(self.runcmd),
+                                    cwd=change_dir,
+                                    stdout=subprocess.PIPE,
+                                    stderr=errDest,
+                                    encoding='UTF-8',
+                                    timeout=timeoutSecs)
+            # raise ValueError('A very specific bad thing happened.')
+        except subprocess.TimeoutExpired:
+            showShRunnerError('Process timed out after {} seconds\n\nCommand: [{}]'.format(timeoutSecs, self.runcmd))
+            return
+        except Exception as err:
+            showShRunnerError("Unexpected Exception ({}):\n{}\n\nOffending Command:\n{}".format(err.__class__.__name__, err, self.runcmd))
+            return
+        
+        sublime.message_dialog('errorRes = {}\ntext = {} [{}]'.format(cmdRes.returncode, cmdRes.stdout, cmdRes.stderr))
+
+        if retrieveSetting("textCmdStopOnErr", self.cmdArgs, self.shrunner_settings):
+            if cmdRes.returncode != 0:
+                textOp = "stdout:: " + cmdRes.stdout
+                if not combineStreams:
+                    textOp += "\nstderr:: {}".format(cmdRes.stderr)
+                showShRunnerError("Error code {} running command:\n{}\n\n{}".format(cmdRes.returncode, self.runcmd, textOp))
+                return
+
+        if self.output_dest == "newTab":
+            self.output_file = sublime.active_window().new_file()
+            self.output_file.set_name("ShellRunner Output")
+            self.output_file.run_command("do_view_insert", {'pos': self.output_file.size(), "text": cmdRes.stdout})
+        elif self.output_dest == "sublConsole":
+            sublime.active_window().run_command('show_panel', {"panel": "console", "toggle": False})
+            # sys.stdout.write(cmd_output)
+            print (cmdRes.stdout)
+        elif self.output_dest == "cursorInsert":
+            self.window.active_view().run_command('insert', {"characters": cmdRes.stdout})
+
+

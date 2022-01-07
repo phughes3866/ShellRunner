@@ -8,6 +8,7 @@
 
   // default output for shell_run_text_command, one of: 'newTab', 'sublConsole', 'cursorInsert'
   "outputTo": "newTab",
+  "outputTabName": "ShellRunner_Output.txt",
 
   "initChangeDir": true,
   "cmdCombineOutputStreams": false,

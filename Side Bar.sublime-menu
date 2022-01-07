@@ -4,7 +4,17 @@
 	{
 		"caption": "Open Terminal Here",
 		"command": "open_terminal",
-		"args": { }
+		"args": { "paths": [] }
+	},
+	{
+		"caption": "Open Terminal Here dirs",
+		"command": "open_terminal",
+		"args": { "dirs": [], "paths": [], "files": [] }
+	},
+	{
+		"caption": "Open Terminal Here files",
+		"command": "open_terminal",
+		"args": { "files": [] }
 	},
 
 	{
@@ -15,36 +25,59 @@
 			{
 				"caption": "Edit Shell Commands…",
 				"id": "shell-runner-edit-commands",
-				"command": "edit_shellrunner_commands"
+				"command": "edit_shellrunner_commands",
+				"args": { "paths": []}
 			},
 			{"caption": "-", "id": "shell_runner_user_commands_below_here"},
 			{
 				"caption": "totp in terminal",
 				"command": "shell_run_text_command",
-				"args": { "command": "/usr/bin/urxvt -e /usr/bin/bash -c '/usr/local/phscripts/totp; /usr/bin/bash'", "outputTo": "none" }
+				"args": { "paths": [], "command": "/usr/bin/urxvt -e /usr/bin/bash -c '/usr/local/phscripts/totp; /usr/bin/bash'", "outputTo": null }
 				// "args": { "command": "/usr/bin/urxvt -e bash -c '/usr/local/phscripts/totp; read -p \"Press enter to continue\"'", "outputTo": "none" }
 				// "args": { "command": "/usr/bin/urxvt", "outputTo": "none" }
 			},
 			{
-				"caption": "echo hello to new file",
+				"caption": "echo hello for .py",
 				"command": "shell_run_text_command",
-				"args": { "command": "/usr/bin/bash -c 'echo hello ; echo errOp 1>&2 ; sleep 5'", "outputTo": "newTab" }
+				"args": { "command": "/usr/bin/bash -c 'echo hello ; echo errOp 1>&2'",
+							"outputTo": "newTab", "paths": [], "files": [], "dirs": [],
+							"targetExtensions": [".py"] }
+			},
+			{
+				"caption": "echo hello still for .py",
+				"command": "shell_run_text_command",
+				"args": { "command": "/usr/bin/bash -c 'echo hello ; echo errOp 1>&2'",
+							"outputTo": "newTab", "paths": [], "files": [],
+							"targetExtensions": [".py"], "dirs": [], "dirOnly": true }
+			},
+			{
+				"caption": "echo hello now for dirs",
+				"command": "shell_run_text_command",
+				"args": { "command": "/usr/bin/bash -c 'echo hello ; echo errOp 1>&2'",
+							"outputTo": "newTab", "paths": [], "files": [],
+							"dirs": [], "dirOnly": true }
 			},
 			{
 				"caption": "spawn totp and bash in urxvt",
 				"command": "shell_spawn_command",
 				"args": { "command": "/usr/bin/urxvt -e /usr/bin/bash -c '/usr/local/phscripts/totp; /usr/bin/bash'",
-						  "initChangeDir": false }
+						  "initChangeDir": false, "paths": [], "dirs": [], "dirOnly": true }
+			},
+			{
+				"caption": "spawn evince",
+				"command": "shell_spawn_command",
+				"args": { "command": "/usr/bin/evince",
+						  "initChangeDir": false, "paths": [] }
 			},
 			{
 				"caption": "echo replacements to panel",
 				"command": "shell_run_text_command",
-				"args": { "command": "echo ${platform} ${file} uhoh", "outputTo": "sublConsole" }
+				"args": { "command": "echo ${platform} ${file} uhoh", "outputTo": "sublConsole", "dirs": [] }
 			},
 			{
 				"caption": "Shell Experiment 3",
 				"command": "shell_run_text_command",
-				"args": { "command": "ps", "outputTo": "sublConsole"}
+				"args": { "command": "ps", "outputTo": "sublConsole", "paths": []}
 			},
 		]
 	},

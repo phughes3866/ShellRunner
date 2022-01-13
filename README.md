@@ -1,272 +1,146 @@
-# Shell Exec
+# ShellRunner Plugin README.md
 
-Run shell commands like git, rvm, rspec, ls, etc. with Bash, Zsh and others inside your Sublime Text 3.
+ShellRunner enables Linux Sublime Text users to run (user defined) shell commands from the Sublime Text sidebar menu or key bindings.
 
-![Demo: RSpec inside Sublime](https://raw.githubusercontent.com/gbaptista/sublime-3-shell-exec/master/demo.gif)
+Shell commands can be run in one of the following three ways:
 
-* [Command Palette](#command-palette)
-* [Default Shortcuts](#default-shortcuts)
-* [Settings](#settings)
-* [Custom Shortcuts](#custom-shortcuts)
-  - [Command Format Syntax](#command-format-syntax)
-* [Common Problems](#common-problems)
-  - [RVM Command, ~/.bashrc, ~/.bash_profile, ~/.zshrc...](#rvm-command-bashrc-bash_profile-zshrc)
-  - [Debugging](#debugging)
-* [Some Cool Demos](#some-cool-demos)
-  - [Git](#git)
-  - [RSpec](#rspec)
-  - [Unix](#unix)
+1. Run a command, capture its textual output and insert this in a user defined destination e.g. at the insertion point(s) of the file under edit, or in the sublime text console, or to a new file/tab.
+2. Spawn a command in a separate process and return control immediately to sublime text (useful when you're not interested
+in capturing the output of the shell command)
+3. Spawn a user defined 'Open Terminal' command to open the user's preferred terminal emulator
 
-### Command Palette
+The above three aspects are further detailed below with respect to their configuration and functionality.
 
-Shell Exec: Open `shell_exec_open`
+# Configuration
 
-### Default Shortcuts
-* Linux: _ctrl + shift + c_
-* Mac: _shift + super + c_
-* Windows: _ctrl + shift + c_
+## Sidebar Menu
 
-### Settings
+Entries in the sidebar menu can be edited via selecting (in the right-click sidebar menu) `Shell Commands` -> `Edit Shell Commands`. This will open a two panel edit screen with an ExampleSideBar.sublime-menu file on the left and the {Package Dir}/User/ShellRunner/Side Bar.sublime-menu file on the right. Copy across, edit and save any menu commands you wish to implement. No menu commands are enabled by default.
 
-`User/Preferences.sublime-settings`:
-```javascript
-// You can use this file to load RVM, ~/.bashrc, custom shell functions...
-// "shell_exec_load_sh_file": "your-sh-file-to-load-before-commands.sh",
+## Key Bindings
 
-// Shell executable: "/bin/bash", "/bin/sh", "/usr/bin/zsh"...
-"shell_exec_executable": "/bin/bash",
+Key bindings can be edited/activated via `Preferences` -> `Package Settings` -> `ShellRunner` -> `Settings` -> `Key Bindings`. This will open a two panel editing screen with an Example.sublime-keymap file on the left and the {Package Dir}/User/ShellRunner/Default ({platform}).sublime-keymap file on the right. Copy across, edit and save any key bindings you wish to implement. No key bindings are enabled by default. 
 
-// Shell executable option: --login # Run as login load your ~/.bashrc or other user settings.
-"shell_exec_executable_option": "--login", // ["-l"] ["--login"]
+# Commands that capture text (shell_run_text_command)
 
-// The output of the command can be shown on the Panel or in a New File: "panel", "file" or "none".
-"shell_exec_output": "file",
+Here are some examples and explanations of sidebar menu entries for the `shell_run_text_command` 
 
-// Set the Output File Syntax. Default is Ruby, because Ruby looks nice. =)
-"shell_exec_output_syntax": "Ruby",
-
-// Enable or Disable the  word wrap at the Output File.
-"shell_exec_output_word_wrap": true,
-
-// Enable or Disable the Debug infos (for plugin developers).
-"shell_exec_debug": false,
-
-// Name of the Shell Exec command box.
-"shell_exec_title": "Shell Exec",
-
-// Defines where the command should be executed: false, "project_folder" or "file_folder".
-// If "project_folder" is set, will execute: cd project_folder && your_commnad.
-"shell_exec_context": "project_folder",
-```
-
-### Custom Shortcuts
-`shell_exec_open`: Open Shell Exec box to input some command.
-
-`shell_exec_run`: Runs a predefined command.
-
-`User/Default (Linux).sublime-keymap`:
-```javascript
 {
-  // (ctrl+shift+c+o) key binding
-  "keys": ["ctrl+shift+c", "ctrl+shift+o"],
-
-  // "shell_exec_open": Open Shell Exec box to input some command.
-  // "shell_exec_run": Runs a predefined command.
-  "command": "shell_exec_open",
-
-  "args": {
-    // Title of the Shell Exec box.
-    "title": "Shell Exec",
-
-    // Predefined command.
-    "command": "git status",
-
-    // Format the command with variables.
-    "format": "git ${input}",
-
-    // You can use this file to load RVM, ~/.bashrc, custom shell functions...
-    // "load_sh_file": "your-sh-file-to-load-before-commands.sh",
-
-    // Shell executable: "/bin/bash", "/bin/sh", "/usr/bin/zsh"...
-    "executable": "/bin/bash",
-
-    // Shell executable option: --login # Run as login load your ~/.bashrc or other user settings.
-    "executable_option": "--login", // ["-l"] ["--login"]
-
-    // The output of the command can be shown on the Panel or in a New File: "panel", "file".
-    "output": "file",
-
-    // Set the Output File Syntax. Default is Ruby, because Ruby looks nice. =)
-    "output_syntax": "Ruby",
-
-    // Enable or Disable the  word wrap at the Output File.
-    "output_word_wrap": true,
-
-    // Enable or Disable the Debug infos (for plugin developers).
-    "debug": false,
-
-    // Name of the Shell Exec command box.
-    "title": "Shell Exec",
-
-    // Defines where the command should be executed: false, "project_folder" or "file_folder".
-    // If "project_folder" is set, will execute: cd project_folder && your_commnad.
-    "context": "project_folder",
-  }
-}
-```
-
-#### Command Format Syntax
-```javascript
-// (ctrl+shift+c+f) key binding
-"keys": ["ctrl+shift+c", "ctrl+shift+f"],
-
-// "shell_exec_open": Open Shell Exec box to input some command.
-// "shell_exec_run": Runs a predefined command.
-"command": "shell_exec_exec",
-
-"args": {
-    // Format the command with variables.
-    "format": "rspec '${file}:${row}'"
-}
-```
-Available variables:
-* `${input}`: _Input from Shell Exec box._
-* `${region}`: _Selected text._
-* `${row}`: _Selected row number or the cursor position at file._
-* `${file_name}`: _ShellExec.py_
-* `${file}`: _/home/user/.config/sublime-text-3/Packages/shell-exec/ShellExec.py_
-* `${packages}`: _/home/user/.config/sublime-text-3/Packages_
-* `${file_base_name}`: _ShellExec_
-* `${platform}`: _Linux_
-* `${file_extension}`: _py_
-* `${file_path}`: _/home/user/.config/sublime-text-3/Packages/shell-exec_
-* `${folder}`: _/home/user/.config/sublime-text-3/Packages/shell-exec_
-
-### Common Problems
-
-#### RVM Command, ~/.bashrc, ~/.bash_profile, ~/.zshrc...
-
-You can load RVM and profile files with login mode:
-```javascript
-// Shell executable: "/bin/bash", "/bin/sh", "/usr/bin/zsh"...
-"shell_exec_executable": "/bin/bash",
-
-// Shell executable option: --login # Run as login load your ~/.bashrc or other user settings.
-"shell_exec_executable_option": "--login", // ["-l"] ["--login"]
-```
-
-Or... You can load a custom sh file:
-```javascript
-"shell_exec_load_sh_file": "my-config-loader-file.sh"
-```
-
-`my-config-loader-file.sh`: Loading ~/.bashrc simulating interactive shell:
-```shell
-PS1=true # Simulate Interactive Shell
-source ~/.bashrc
-```
-
-`my-config-loader-file.sh`: Loading RVM command:
-```shell
-export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-```
-
-#### Debugging
-Just enable the debug to see panel outputs:
-`User/Preferences.sublime-settings`:
-```javascript
-// Enable or Disable the Debug infos (for plugin developers).
-"shell_exec_debug": true,
-```
-
-### Some Cool Demos
-#### Git
-```javascript
-{
-  "keys": ["ctrl+shift+g", "ctrl+shift+g"],
-  "command": "shell_exec_open",
-  "args": { "title": "Git Command:", "format": "git ${input}" }
+	"caption": "shell output to new tab",
+	"command": "shell_run_text_command",
+	"args": { "shellCommand": "/usr/bin/bash -c 'echo hello'",
+			  "outputTo": "newTab" }
 },
 {
-  "keys": ["ctrl+shift+g", "ctrl+shift+c"],
-  "command": "shell_exec_open",
-  "args": {
-    "title": "Git Checkout:",
-    "format": "git checkout ${input}",
-    "command": "'${file}'"
-  }
+	"caption": "shell output name of last selected sidebar item to cursor(s)",
+	"command": "shell_run_text_command",
+	"args": { "shellCommand": "/usr/bin/bash -c \"echo '${lastPath}'\"",
+			  "outputTo": "cursorInsert",
+			  "paths": [] }
 },
 {
-  "keys": ["ctrl+shift+g", "ctrl+shift+s"],
-  "command": "shell_exec_run",
-  "args": { "command": "git status" }
+	"caption": "cat the contents of sidebar selected files to new tab",
+	"command": "shell_run_text_command",
+	"args": { "shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
+			  "outputTo": "newTab",
+			  "files": [] }
 },
-{
-  "keys": ["ctrl+shift+g", "ctrl+shift+d", "ctrl+shift+a"],
-  "command": "shell_exec_run",
-  "args": { "command": "git diff", "output_syntax": "Diff" }
-},
-{
-  "keys": ["ctrl+shift+g", "ctrl+shift+d", "ctrl+shift+f"],
-  "command": "shell_exec_run",
-  "args": { "command": "git diff '${file}'", "output_syntax": "Diff" }
-},
-{
-  "keys": ["ctrl+shift+g", "ctrl+shift+b"],
-  "command": "shell_exec_run",
-  "args": { "command": "git blame '${file}'", "output_syntax": "Git Blame" }
-}
-```
 
-#### RSpec
-```javascript
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+r"],
-  "command": "shell_exec_open",
-  "args": {
-    "title": "RSpec Command:", "format": "rspec ${input} --require spec_helper"
-  }
-},
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+o"],
-  "command": "shell_exec_open",
-  "args": {
-    "title": "RSpec Command:",
-    "command": "'${file}:${row}'",
-    "format": "rspec ${input} --require spec_helper"
-  }
-},
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+a"],
-  "command": "shell_exec_run",
-  "args": { "command": "rspec spec --require spec_helper" }
-},
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+f"],
-  "command": "shell_exec_run",
-  "args": { "command": "rspec '${file}' --require spec_helper" }
-},
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+l"],
-  "command": "shell_exec_run",
-  "args": { "command": "rspec '${file}:${row}' --require spec_helper" }
-},
-{
-  "keys": ["ctrl+shift+r", "ctrl+shift+s"],
-  "command": "shell_exec_run",
-  "args": { "command": "rspec '${region}' --require spec_helper" }
-}
-```
+# Commands that spawn a shell process (shell_spawn_command)
 
-#### Unix
-```javascript
+Here are some examples and explanations of sidebar menu entries for the `shell_spawn_command` 
+
 {
-  "keys": ["ctrl+shift+u", "ctrl+shift+p"],
-  "command": "shell_exec_open",
-  "args": {
-    "title": "Find Process",
-    "format": "ps aux | grep ${input}"
-  }
-}
-```
+	"caption": "spawn totp and bash in urxvt",
+	"command": "shell_spawn_command",
+	"args": { "shellCommand": "/usr/bin/urxvt -e /usr/bin/bash -c '/usr/local/phscripts/totp; /usr/bin/bash'",
+			  "initChangeDir": false, "paths": [], "dirs": [], "dirOnly": true }
+},
+{
+	"caption": "spawn evince",
+	"command": "shell_spawn_command",
+	"args": { "shellCommand": "/usr/bin/evince",
+			  "initChangeDir": false, "paths": [] }
+},
+
+## List of possible args for shell_run_text_command and shell_spawn_command:
+
+### files, dirs, paths:
+
+These arguments, if given, must be set to an empty list. Each setting enables lists of sidebar selected files/dirs/paths items to be used as substitution variables in the shellCommand argument. See 'Sidebar Variables' below for more details:
+
+"files": [] // enables ${files} and ${lastFile} substitution variables.
+"dirs": [] // enables ${dirs} and ${lastDir} substitution variables.
+"paths": [] // enables ${paths} and ${lastPath} substitution variables. NB Paths are either files or dirs (no discrimination).
+
+### args for both commands (shell_run_text_command and shell_spawn_command):
+
+"shellCommand": "string" // the actual shell command you wish to run (mandatory). May include substitution variables (see below for options and syntax)
+"targetExtns": [] // list of extensions e.g. ["jpg", "png"] for which this command is enabled (optional). N.B. either "files" or "dirs" arg must also be given so that file extensions can be checked.
+"dirOnly": true/false // Allow this command only for directories. Defaults to false. N.B. "dirs" arg must also be given.
+"initChangeDir": true/false // If true (default) change the working directory to that of the [???] before running the shellCommand
+
+### Additional args for shell_run_text_command only:
+
+"outputTo": ""
+	String value to determine the destination of shellCommand output text. Can be one of:  'newTab', 'sublConsole', 'cursorInsert', 'clip', null (output is not sent anywhere). 
+
+"textCmdStopOnErr": true/false
+	Default = false. If 'true' then do not output any text if there is an error code returned from the shell command, but rather report the error code, in a Sublime Text message window, along with the stdout and stderr text received.
+
+"textCmdCombineStdErrOut": true/false
+	If false (the default) then capture only stdout text. If true then capture both stdout and stderr.
+
+"textCmdTimeout": Integer
+	The number of seconds (default 10) to wait for the shellCommand to complete.
+
+### Substitution Variables for Commands
+
+ShellRunner commands can contain placeholder variables. These will be substituted for the relevant value (if available) at command run time. The syntax for the placeholder variables is as per sublime-snippet syntax e.g. ${folder}. Placeholder variables are of two types: a) variables corresponding to the active window e.g. file under edit, and b) variables corresponding to the files or folders selected in the sidebar.
+
+#### Active Window Variables
+
+The following variables correspond to the sublime text environment and currently active edit window:
+
+${packages}
+${platform}
+${file}
+${file_path}
+${file_name}
+${file_base_name}
+${project_extension}
+${file_extension}
+${folder}
+${project}
+${project_path}
+${project_name}
+${project_base_name}
+
+Note: These variables do not have escaped spaces so may not be directly usable by the shell if they contain spaces.
+
+#### Sidebar Variables
+
+Accurate information concerning the selected items in the sidebar can be utilised, as follows, if one or more
+or the following arguments are included in the command args to the ShellRunner command: 'paths': [], 'files': [], 'dirs': []
+
+1) Available if the "paths": [] arg is contained in the command args:
+
+* ${paths}		- a space separated list of all the files/folders selected in the sidebar
+* ${lastPath}	- the most recently selected (and still selected) file/folder in the sidebar
+
+2) Available if the "files": [] arg is contained in the command args:
+
+* ${files}		- a space separated list of all the files selected in the sidebar
+* ${lastFile}	- the most recently selected (and still selected) file in the sidebar
+
+3) Available if the "dirs": [] arg is contained in the command args:
+
+* ${dirs}		- a space separated list of all the folders selected in the sidebar
+* ${lastDir}	- the most recently selected (and still selected) folder in the sidebar
+
+Note: If the required arg is not passed as a command arg then the corresponding placeholder variables will be substituted with
+an empty string.
+
+Note: In contrast with the active window placeholder variables, the string replacements for the sidebar variables are shell escaped and so can be directly used in shell commands.
+
+

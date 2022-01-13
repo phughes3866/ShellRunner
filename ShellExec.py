@@ -9,7 +9,7 @@ import subprocess
 import shlex
 import time
 # from subprocess import Popen, PIPE, STDOUT
-# from threading import Thread
+from threading import Thread
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
 plugin_canon_name = 'ShellRunner'
@@ -20,16 +20,56 @@ def showShRunnerError(errormsg):
 def splitCommand(cmdStr):
     return shlex.split(cmdStr, posix=True)
 
-def retrieveSetting(settingName, primaryDict, secondaryDict={}):
+def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
     if secondaryDict:
-        return primaryDict.get(settingName, secondaryDict.get(settingName))
+        return primaryDict.get(settingName, secondaryDict.get(settingName, default))
     else:
-        return primaryDict.get(settingName)
+        return primaryDict.get(settingName, default)
 
-def window_set_status(key, textMessage=""):
-    for window in sublime.windows():
-        for view in window.views():
-            view.set_status(key, textMessage)
+# def window_set_status(key, textMessage=""):
+#     for window in sublime.windows():
+#         for view in window.views():
+#             view.set_status(key, textMessage)
+
+# class ProgressNotifier():
+#     """
+#     Animates an indicator, [=   ]
+
+#     :param message:
+#         The message to display next to the activity indicator
+
+#     :param success_message:
+#         The message to display once the thread is complete
+#     """
+
+#     def __init__(self, message, success_message=''):
+#         self.message = message
+#         self.success_message = success_message
+#         self.stopped = False
+#         self.addend = 1
+#         self.size = 8
+#         sublime.set_timeout(lambda: self.run(0), 100)
+
+#     def run(self, i):
+#         if self.stopped:
+#             return
+
+#         before = i % self.size
+#         after = (self.size - 1) - before
+
+#         # sublime.status_message('%s [%s=%s]' % (self.message, ' ' * before, ' ' * after))
+#         sublime.status_message('deary doo')
+#         if not after:
+#             self.addend = -1
+#         if not before:
+#             self.addend = 1
+#         i += self.addend
+
+#         sublime.set_timeout(lambda: self.run(i), 100)
+
+#     def stop(self):
+#         sublime.status_message(self.success_message)
+#         self.stopped = True
 
 class DoViewInsertCommand(sublime_plugin.TextCommand):
   def run(self, edit, pos, text):
@@ -86,10 +126,14 @@ def addMultiItems(settingsDict, argsDict={}):
     addDict = {}
     for addList in ['files', 'dirs', 'paths']:
         gotList = argsDict.get(addList)
+        lastSelectedKey = "last" + addList[:-1].capitalize()
         if gotList:
-            addDict[addList] = " ".join(gotList)
+            escapedList = [ shlex.quote(a) for a in gotList ]
+            addDict[addList] = " ".join(escapedList)
+            addDict[lastSelectedKey] = escapedList[0]
         else:
             addDict[addList] = ""
+            addDict[lastSelectedKey] = ""
     settingsDict.update(addDict)
     return settingsDict
 
@@ -114,7 +158,7 @@ def amIEnabled(visArgs):
                 print("not a file: {}".format(lastSelectedSidebarPath))
                 lastSelectedSidebarPath = ""
         else:
-            print("ShellRunner Warning: Command[{}] has no 'files':[] or 'paths': [] to check against allowed extensions: {}".format(visArgs.get('command', "NO COMMAND"), targetExtns))
+            print("ShellRunner Warning: Command[{}] has no 'files':[] or 'paths': [] to check against allowed extensions: {}".format(visArgs.get('shellCommand', "NO COMMAND"), targetExtns))
         if lastSelectedSidebarPath:
             haveExtn = os.path.splitext(lastSelectedSidebarPath)[1]
             if haveExtn in targetExtns:
@@ -127,164 +171,239 @@ def amIEnabled(visArgs):
             print('enabled as we have a dir')
     return visMe
 
+def loadPluginAndProjSettings(curWindow):
+    theSettings = sublime.load_settings(plugin_settings_file)
+    if curWindow.project_data():
+        proj_plugin_settings = curWindow.project_data().get(plugin_canon_name, None)
+        if proj_plugin_settings:
+            # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
+            theSettings.update(proj_plugin_settings)
+    return theSettings
 
-class ShellSpawnCommandCommand(sublime_plugin.WindowCommand):
-    def run(self, **kwargs):
-        self.cmdArgs = kwargs
-        # sublime.message_dialog('args = {}'.format(self.cmdArgs))
-        sublSettings = addMultiItems(self.window.extract_variables(), self.cmdArgs)
-        self.shrunner_settings = sublime.load_settings(plugin_settings_file)
-        proj_plugin_settings = sublime.active_window().active_view().settings().get(plugin_canon_name, {})
-        # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
-        self.shrunner_settings.update(proj_plugin_settings)
-        self.runcmd = retrieveSetting("command", self.cmdArgs)
-        if not self.runcmd:
+class argChecker():
+    # def __init__(self):
+        # self.haveit = "here we go"
+
+    def sanitiseSpawnCmdArgs(self):
+        ## Step A1: Check and build the run command
+        runcmd = retrieveSetting("shellCommand", self.cmdArgs)
+        if not runcmd:
             showShRunnerError("No command defined.")
-            return
-        self.runcmd = sublime.expand_variables(self.runcmd, sublSettings)
-        cmd_array = splitCommand(self.runcmd)
+            return False
+        else:
+            # expand any 'standard' sublime placeholder variables in our command
+            # `- e.g. ${packages} ${platform} ${file} ${file_path} ${file_name} ${file_base_name} ${project_extension}
+            #  - ${file_extension} ${folder} ${project} ${project_path} ${project_name} ${project_base_name}
+            # furthermore allow for several custom placeholder vars to be expanded:
+            # `- ${paths}, ${lastPath}, ${dirs}, ${lastDir}, ${files}, ${lastFile} (all as escaped 'shell friendly' strings) 
+            self.cmdArgs["shellCommand"] = sublime.expand_variables(runcmd, addMultiItems(self.window.extract_variables(), self.cmdArgs))
+        
+        ## Step A2: Check 'initChangeDir' setting to see if we should change dir, to file loc, before running command
         doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, self.shrunner_settings)
         if not isinstance(doChgDir, bool):
             showShRunnerError("Settings error: 'initChangeDir' must be defined True or False, not [{}]".format(doChgDir))
-            return
+            return False
         if doChgDir:
-            change_dir = sublime.active_window().extract_variables().get('file_path', '.')
+            self.cmdArgs["initChangeDir"] = self.window.extract_variables().get('file_path', '.')
         else:
-            change_dir = "."
-        subprocess.Popen(cmd_array, cwd=change_dir)
-        print ("ShellRunner spawned: {}".format(self.runcmd))
+            self.cmdArgs["initChangeDir"] = "."
+        return True
 
-    def is_enabled(self, **tkwargs):
-        self.visArgs = tkwargs
-        return amIEnabled(self.visArgs)
+    def sanitiseTextCmdArgs(self):
+        if not self.sanitiseSpawnCmdArgs():
+            return False
 
+        ## Step B1: Prepare 'newTabName' from settings (if this is None, that's OK, we just have a nameless new tab)
+        self.cmdArgs["newTabName"] = retrieveSetting("outputTabName", self.cmdArgs, self.shrunner_settings)
 
-class ShellRunTextCommandCommand(sublime_plugin.WindowCommand):
-
-    def run(self, **kwargs):
-        ## Step 1: Initialise Settings
-        self.cmdArgs = kwargs
-        sublSettings = addMultiItems(self.window.extract_variables(), self.cmdArgs)
-        # sublime.message_dialog('all settings = {}'.format(sublSettings))
-        # subl_top_folder_path = sublSettings.get("folder")
-        self.shrunner_settings = sublime.load_settings(plugin_settings_file)
-        proj_plugin_settings = sublime.active_window().active_view().settings().get(plugin_canon_name, {})
-        # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
-        self.shrunner_settings.update(proj_plugin_settings)
-
-        ## Step 2: Build the run command 'self.runcmd' and perform pre-run checks
-        self.runcmd = retrieveSetting("command", self.cmdArgs)
-        if not self.runcmd:
-            showShRunnerError("No command defined.")
-            return
-        self.output_dest = retrieveSetting("outputTo", self.cmdArgs, self.shrunner_settings)
-        if not self.output_dest in ['newTab', 'sublConsole', 'cursorInsert', None]:
-            showShRunnerError("'outputTo' is incorrectly defined in settings. [{}] is invalid.".format(self.output_dest))
-            return
-        # expand any sublime placeholder variables in our command
-        # `- e.g. ${packages} ${platform} ${file} ${file_path} ${file_name} ${file_base_name} ${project_extension}
-        #  - ${file_extension} ${folder} ${project} ${project_path} ${project_name} ${project_base_name}
-        # sublime.message_dialog("settings: {}".format(sublSettings))
-        self.runcmd = sublime.expand_variables(self.runcmd, sublSettings)
-        # check 'initChangeDir' setting to see if we should change dir, to file loc, before running command
-        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, self.shrunner_settings)
-        if not isinstance(doChgDir, bool):
-            showShRunnerError("Settings error: 'initChangeDir' must be defined True or False, not [{}]".format(doChgDir))
-            return
-        if doChgDir:
-            change_dir = sublime.active_window().extract_variables().get('file_path', '.')
+        ## Step B2: Check 'outputTo' is defined correctly:
+        output_dest = retrieveSetting("outputTo", self.cmdArgs, self.shrunner_settings, default=None)
+        if not output_dest in ['newTab', 'sublConsole', 'cursorInsert', 'clip', None]:
+            showShRunnerError("'outputTo' is incorrectly defined in settings. [{}] is invalid.".format(output_dest))
+            return False
         else:
-            change_dir = "."
-        # check 'cmdCombineOutputStreams' setting to see if we should merge stdout and stderr from command
-        combineStreams = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, self.shrunner_settings)
+            self.cmdArgs["outputTo"] = output_dest
+
+        ## Step B3: Check 'cmdCombineOutputStreams' setting to see if we should merge stdout and stderr from command
+        combineStreams = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, self.shrunner_settings, default=False)
         if not isinstance(combineStreams, bool):
             showShRunnerError("Settings error: 'cmdCombineOutputStreams' must be defined True or False, not [{}]".format(combineStreams))
-            return
-        if combineStreams:
+            return False
+        else:
+            self.cmdArgs["cmdCombineOutputStreams"] = combineStreams
+
+        ## Step B4: Check 'textCmdTimeout' setting to see if we should set a timeout for our command    
+        timeoutSecs = retrieveSetting("textCmdTimeout", self.cmdArgs, self.shrunner_settings)
+        if not timeoutSecs or not isinstance(timeoutSecs, int):
+            timeoutSecs = 10  # default timeout
+        self.cmdArgs["textCmdTimeout"] = timeoutSecs
+
+        ## Step B5: Check 'textCmdStopOnErr' setting to see if we should stop on shell errors    
+        self.cmdArgs["textCmdStopOnErr"] = retrieveSetting("textCmdStopOnErr", self.cmdArgs, self.shrunner_settings, default=False)
+        if not isinstance(self.cmdArgs["textCmdStopOnErr"], bool):
+            showShRunnerError("Settings error: 'textCmdStopOnErr' must be defined True or False, not [{}]".format(self.cmdArgs["textCmdStopOnErr"]))
+            return False
+            # stopOnErr = False  # default timeout
+        # self.cmdArgs["textCmdStopOnErr"] = stopOnErr
+
+        ## All checks OK. self.cmdArgs prepared for running phase
+        return True
+
+class runTxtCommand(Thread):
+
+    def __init__(self, passedArgs, targetView):
+        self.cmdArgs = passedArgs
+        self.targetView = targetView
+        self.textOut = None
+        Thread.__init__(self)
+
+    def run(self):
+        if self.cmdArgs["cmdCombineOutputStreams"]:
             errDest = subprocess.STDOUT
         else:
             errDest = subprocess.PIPE
-        # check 'textCmdTimeout' setting to see if we should set a timeout for our command    
-        timeoutSecs = retrieveSetting("textCmdTimeout", self.cmdArgs, self.shrunner_settings)
-
-        ## Step 3: Run command, capture output. Implement error check and timeout as per settings.
-        status_key = "ShellRunner-" + str(time.time())
-        status_message = "ShellRunner Waiting On: {}".format(self.runcmd)
-        if timeoutSecs:
-            status_message += " (timeout:{}secs)".format(timeoutSecs)
-        else:
-            status_message += " (timeout not set)"
-        # self.window.active_view().set_status(status_key, status_message)
-        self.window.active_view().set_status("terry", "turnip" + str(time.time()))
-        # sublime.active_window().active_view().set_status(status_key, status_message)
-        # sublime.active_window().set_status_bar_visible()
         raisedException = True
         try:
-            cmdRes = subprocess.run(splitCommand(self.runcmd),
-                                    cwd=change_dir,
+            cmdRes = subprocess.run(splitCommand(self.cmdArgs["shellCommand"]),
+                                    cwd=self.cmdArgs["initChangeDir"],
                                     stdout=subprocess.PIPE,
                                     stderr=errDest,
                                     encoding='UTF-8',
-                                    timeout=timeoutSecs)
+                                    timeout=self.cmdArgs["textCmdTimeout"])
             # raise ValueError('A very specific bad thing happened.')
             raisedException = False
         except subprocess.TimeoutExpired:
-            showShRunnerError('Process timed out after {} seconds\n\nCommand: [{}]'.format(timeoutSecs, self.runcmd))
+            showShRunnerError('Process timed out after {} seconds (user set timeout)\n\nCommand: [{}]'.format(self.cmdArgs["textCmdTimeout"], self.cmdArgs["shellCommand"]))
             return
         except Exception as err:
-            showShRunnerError("Unexpected Exception ({}):\n{}\n\nOffending Command:\n{}".format(err.__class__.__name__, err, self.runcmd))
-        finally:
-            self.window.active_view().set_status("terry", "")
-            if raisedException:
-                return
-        # sublime.message_dialog('errorRes = {}\ntext = {} [{}]'.format(cmdRes.returncode, cmdRes.stdout, cmdRes.stderr))
-        # Stop on error if required by settings
-        if retrieveSetting("textCmdStopOnErr", self.cmdArgs, self.shrunner_settings):
+            showShRunnerError("Unexpected Exception ({}):\n{}\n\nOffending Command:\n{}".format(err.__class__.__name__, err, self.cmdArgs["shellCommand"]))
+
+        if raisedException:
+            return
+        if self.cmdArgs["textCmdStopOnErr"]:
             if cmdRes.returncode != 0:
                 textOp = "stdout:: " + cmdRes.stdout
-                if not combineStreams:
+                if not self.cmdArgs["cmdCombineOutputStreams"]:
                     textOp += "\nstderr:: {}".format(cmdRes.stderr)
-                showShRunnerError("Error code {} running command:\n{}\n\n{}".format(cmdRes.returncode, self.runcmd, textOp))
+                showShRunnerError("Error code {} running command:\n{}\n\n{}".format(cmdRes.returncode, self.cmdArgs["shellCommand"], textOp))
                 return
+        self.textOut = cmdRes.stdout
+        rxText = cmdRes.stdout
+        if rxText:
+            ## Step 4: Send command output to set destination
+            if self.cmdArgs["outputTo"] == "newTab":
+                self.output_file = sublime.active_window().new_file()
+                if self.cmdArgs["newTabName"]:
+                    self.output_file.set_name(self.cmdArgs["newTabName"])
+                self.output_file.run_command("do_view_insert", {'pos': self.output_file.size(), "text": rxText})
+            elif self.cmdArgs["outputTo"] == "sublConsole":
+                sublime.active_window().run_command('show_panel', {"panel": "console", "toggle": False})
+                print (rxText)
+            elif self.cmdArgs["outputTo"] == "cursorInsert":
+                self.targetView.run_command('insert', {"characters": rxText})
+            elif self.cmdArgs["outputTo"] == "clip":
+                subprocess.Popen(('xsel', '-i', '-b'), stdin=subprocess.PIPE).communicate(bytearray(rxText, 'utf-8'))
 
-        ## Step 4: Send command output to set destination
-        if self.output_dest == "newTab":
-            self.output_file = sublime.active_window().new_file()
-            newTabName = retrieveSetting("outputTabName", self.cmdArgs, self.shrunner_settings)
-            if newTabName:
-                self.output_file.set_name(newTabName)
-            self.output_file.run_command("do_view_insert", {'pos': self.output_file.size(), "text": cmdRes.stdout})
-        elif self.output_dest == "sublConsole":
-            sublime.active_window().run_command('show_panel', {"panel": "console", "toggle": False})
-            # sys.stdout.write(cmd_output)
-            print (cmdRes.stdout)
-        elif self.output_dest == "cursorInsert":
-            self.window.active_view().run_command('insert', {"characters": cmdRes.stdout})
 
+class ThreadProgress():
+
+    """
+    Animates an indicator, [=   ], in the status area while a thread runs
+    :param thread:
+        The thread to track for activity
+    :param message:
+        The message to display next to the activity indicator
+    :param success_message:
+        The message to display once the thread is complete
+    """
+
+    def __init__(self, thread, message, success_message):
+        self.thread = thread
+        self.message = message
+        self.success_message = success_message
+        self.addend = 1
+        self.size = 8
+        self.last_view = None
+        self.window = None
+        sublime.set_timeout(lambda: self.run(0), 100)
+
+    def run(self, i):
+        if self.window is None:
+            self.window = sublime.active_window()
+        active_view = self.window.active_view()
+
+        if self.last_view is not None and active_view != self.last_view:
+            self.last_view.erase_status('_shellRunner')
+            self.last_view = None
+
+        if not self.thread.is_alive():
+            def cleanup():
+                active_view.erase_status('_shellRunner')
+            # if hasattr(self.thread, 'textOut') and self.thread.textOut is None:
+            if self.thread.textOut is None:
+                cleanup()
+                return
+            active_view.set_status('_shellRunner', self.success_message)
+            sublime.set_timeout(cleanup, 1000)
+            return
+
+        before = i % self.size
+        after = (self.size - 1) - before
+
+        active_view.set_status('_shellRunner', '%s [%s=%s]' % (self.message, ' ' * before, ' ' * after))
+        if self.last_view is None:
+            self.last_view = active_view
+
+        if not after:
+            self.addend = -1
+        if not before:
+            self.addend = 1
+        i += self.addend
+
+        sublime.set_timeout(lambda: self.run(i), 100)
+
+class ShellRunTextCommandCommand(sublime_plugin.WindowCommand, argChecker):
+
+    def __init__(self, window):
+        super().__init__(window)
+        argChecker.__init__(self)
+
+    def run(self, **kwargs):
+        # Initialise Command Args and Plugin Settings
+        self.cmdArgs = kwargs
+        self.shrunner_settings = loadPluginAndProjSettings(self.window)
+        # Sanitise self.cmdArgs before running the command
+        if not self.sanitiseTextCmdArgs():
+            return
+        # All sanitised OK, so run the command as a thread and show its progress in the status bar
+        doTxtCommand = runTxtCommand(self.cmdArgs, self.window.active_view())
+        doTxtCommand.start()
+        status_message = "ShellRunner running: {}".format(self.cmdArgs["shellCommand"])
+        ThreadProgress(doTxtCommand, status_message, "ShellRunner command completed OK")
+        
     def is_enabled(self, **tkwargs):
         self.visArgs = tkwargs
         return amIEnabled(self.visArgs)
 
 
+class ShellSpawnCommandCommand(sublime_plugin.WindowCommand, argChecker):
 
-        # visRes = True
-        # if extnVals:
-        #     self.window.extract_variables().get('file_extension')
-        # # self.is_visible(self, paths, application, extensions, args=[])
-        # return True
+    def __init__(self, window):
+        super().__init__(window)
+        argChecker.__init__(self)
 
-    # def is_visible(self, paths=[], application="", extensions="", args=[]):
-    #     if extensions == "*":
-    #         extensions = ".*"
-    #     if extensions == "":
-    #         return CACHED_SELECTION(paths).len() > 0
-    #     else:
-    #         has = CACHED_SELECTION(paths).hasFilesWithExtension(extensions)
-    #         return has or (
-    #             not has
-    #             and not s.get(
-    #                 "hide_open_with_entries_when_there_are_no_applicable", False
-    #             )
-    #         )
+    def run(self, **kwargs):
+        # Initialise Command Args and Plugin Settings
+        self.cmdArgs = kwargs
+        self.shrunner_settings = loadPluginAndProjSettings(self.window)
+        # Sanitise self.cmdArgs before running the command
+        if not self.sanitiseSpawnCmdArgs():
+            return
+        subprocess.Popen(splitCommand(self.cmdArgs["shellCommand"]),
+                        cwd=self.cmdArgs["initChangeDir"])
+        print ("ShellRunner spawned: {}".format(self.cmdArgs["shellCommand"]))
 
+    def is_enabled(self, **tkwargs):
+        self.visArgs = tkwargs
+        return amIEnabled(self.visArgs)
 

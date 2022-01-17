@@ -1,16 +1,133 @@
+// ShellRunner ExampleSideBar.sublime-menu file.
+// This inactive file is intended to be used as a template from
+// `- which users can build their own active 'Side Bar.sublime-menu'
+//  - file (which will presently be in the right hand panel if you're
+//  - using the standard side bar edit mode of ShellRunner).
+//  - Copy entries from here to there, and save to make active.
+
+// Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
+
 [{"id": "shell_runner_sidebar_menu",	"children": [
-	{ "caption" : "-", "id": "shell_runner_user_commands_below_here"},
-	// This Example ShellRunner sidebar menu file is not active
-	// It is intended to be used as a template from which users can
-	// `- build their own active 'Side Bar.sublime-menu' file
+	{ "caption" : "-", "id": "shell_runner_sidebar_commands_below_here"},
 
-	// Note: The commands below are geared to Linux and the
-	// `- Bourne Again Shell (bash).
-
+    // "sidebar_shellrunner_spawn_command" sidebar demo entries:
 	{
-		"caption": "ps (output to panel)",
-		"command": "shell_run_text_command",
-		"args": { "command": "ps", "output": "panel"}
-	}
-
+		"caption":	"spawn: open .py file in nano",
+		"command":	"sidebar_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
+				 	"targetExtensions": [".py"], // the "files": [] arg is needed for targetExtensions to function
+				 	"files": [],
+				}
+	},
+	{
+		"caption":	"spawn: open pic file in geeqie",
+		"command":	"sidebar_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "geeqie '${lastFile}'",
+				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+				 	"files": [],
+				}
+	},
+	// "sidebar_shellrunner_text_command" sidebar demo entries:
+	// `- these text-return commands have a wider range of args
+	//  - so that governing the flow/placement of text can be fine tuned
+	{
+		"caption":	"txt: insert stdout in current doc",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+				 	"outputTo": "cursorInsert",
+				}
+	},
+	{
+		"caption":	"txt: continue despite non-zero shell exit",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
+				 	"outputTo": "newTab",
+				 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
+				}
+	},
+	{
+		"caption":	"txt: send stdout AND stderr to new tab",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:; echo Shell_stdout ; echo Shell_stderr 1>&2'",
+				 	"cmdCombineOutputStreams": true, // default is false, only capturing stdout
+				 	"outputTo": "newTab",
+				 	"outputTabName": "stdout-stderr-demo",
+				}
+	},
+	{
+		"caption":	"txt: default timeout (10 secs) demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'sleep 15; echo never_never'",
+					"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
+				}
+	},
+	{
+		"caption":	"txt: command for dirs only",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Directory Listing for ${lastDir}: ; ls ${lastDir}'",
+					"outputTo": [ "sublConsole", "msgBox" ],
+					"dirOnly": true,
+					"dirs": [],
+				}
+	},
+	{
+		"caption":	"txt: cat sidebar selected file(s) to new tab",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
+					"outputTo": "newTab",
+					"files": [],
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 1",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'platform: ${platform}, packages: ${packages}, file: ${file}, file_path: ${file_path}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 2",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'file_name: ${file_name}, file_base_name: ${file_base_name}, project_extension: ${project_extension}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 3",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'file_extension: ${file_extension}, folder: ${folder}, project: ${project}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 4",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'project_path: ${project_path}, project_name: ${project_name}, project_base_name: ${project_base_name}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: sidebar files replacement demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'From files: [] arg we get 2x sidebar file selection strings: files = ${files}, lastFile = ${lastFile}'",
+					"outputTo": "msgBox",
+					"files": [],
+				}
+	},
+	{
+		"caption":	"txt: sidebar dirs replacement demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'From dirs: [] arg we get 2x sidebar dir selection strings: dirs = ${dirs}, lastDir = ${lastDir}'",
+					"outputTo": "msgBox",
+					"dirs": [],
+				}
+	},
+	{
+		"caption":	"txt: sidebar paths replacement demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'From paths: [] arg we get 2x sidebar file+dir selection strings: paths = ${paths}, lastPath = ${lastPath}'",
+					"outputTo": "msgBox",
+					"paths": [],
+				}
+	},
 ]}]

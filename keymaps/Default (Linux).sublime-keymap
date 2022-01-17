@@ -1,3 +1,43 @@
+// This file is for user defined key bindings associated with the ShellRunner plugin 
 [
-  // { "keys": ["ctrl+shift+c"], "command": "shell_exec_open" }
+	{
+		"keys":	["ctrl+alt+t"],
+		"command":	"open_terminal_here",
+	},
+	{
+		"keys":	["ctrl+alt+s"],
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'From files: [] arg we get 2x sidebar file selection strings: files = ${files}, lastFile = ${lastFile}'",
+					"outputTo": "msgBox",
+					"sideBarMode": false,
+					"targetExtensions": [".py"],
+					"consoleDebug": true,
+				}
+	},
+	// {
+	// 	"keys":	[],
+	// 	"command":	"shell_spawn_command",
+	// 	"args":	{	"shellCommand": "geeqie '${lastFile}'",
+	// 			 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+	// 			 	"files": [],
+	// 			}
+	// },
+	// "shell_run_text_command" key bindings demo entries:
+	// `- these text-return commands have a wider range of args
+	//  - so that governing the flow/placement of text can be fine tuned
+	// {
+	// 	"keys":	[],
+	// 	"command":	"shell_run_text_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+	// 			 	"outputTo": "cursorInsert",
+	// 			}
+	// },
+	// {
+	// 	"keys":	[],
+	// 	"command":	"shell_run_text_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
+	// 			 	"outputTo": "newTab",
+	// 			 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
+	// 			}
+	// },
 ]

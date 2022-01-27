@@ -2,16 +2,53 @@
 [
 	{
 		"keys":	["ctrl+alt+t"],
-		"command":	"open_terminal_here",
+		"command":	"window_open_terminal_here",
 	},
 	{
-		"keys":	["ctrl+alt+s"],
+		"keys":	["ctrl+alt+s+c"],
 		"command":	"window_shellrunner_text_command",
 		"args":	{	"shellCommand": "echo 'From files: [] arg we get 2x sidebar file selection strings: files = ${files}, lastFile = ${lastFile}'",
 					"outputTo": "msgBox",
 					"sideBarMode": false,
 					"targetExtensions": [".py"],
 					"consoleDebug": true,
+				}
+	},
+	{
+		"keys":	["ctrl+alt+s+a"],
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					// This example shows how to use single and double quotes in Env and substitution vars
+					"shellCommand": [ "/usr/bin/bash -c 'echo \"Subst VarA: ${Sstra}\"; ",
+					                  "echo \"Subst VarB: ${Sstrb}\"; ",
+					                  "printf \"Env VarA (as subst): ${Estra}\n\"; ",
+					                  "printf \"Env VarB (as subst): ${Estrb}\n\"; ",
+					                  "echo \"Env VarA (shell expanded): \\${Estra}\"; ",
+					                  "echo \"Env VarB (shell expanded): \\${Estrb}\"; ",
+					                  "'",
+					                ],
+					"outputTo": ["msgBox", "clip"],
+					"extraCmdSubstVars":	{ 	"Sstra"	:	"This line's got single quotes. It's working fine.",
+												"Sstrb" :   "This line has \\\"double\\\" quotes. They work \\\"fine\\\" too.",
+											},
+					"extraCmdShellEnvVars":	{ 	"Estra"	:	"BEST_USE_RESTRICTED_CHARSET_FOR_ENV_VARS",
+												"Estrb"	:	"It's unclear how the mind's eye works."
+											},
+				}
+	},	{
+		"keys":	["ctrl+alt+s+b"],
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					// some special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
+					// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
+					//  - by setting "selAsLiteralStr" to true - as follows
+					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\" ",
+									"\"Select some awkward text and run again.\n\" ",
+									"|| printf -- \"%s\" ${selText};",
+									"'"],
+					"outputTo": ["msgBox", "clip"],
+					"selAsLiteralStr": true,
+					"multiSelSeparator": "--joiner--",
 				}
 	},
 	// {

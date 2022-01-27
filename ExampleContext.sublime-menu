@@ -1,0 +1,98 @@
+// ShellRunner ExampleContext.sublime-menu file.
+// This inactive file is intended to be used as a template from
+// `- which users can build their own active 'Context.sublime-menu'
+//  - file (which will presently be in the right hand panel if you're
+//  - using the standard context menu edit mode of ShellRunner).
+//  - Copy entries from here to there, and save to make active.
+
+// Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
+
+[{"id": "shell_runner_context_commands_parent",	"children": [
+	{ "caption" : "-", "id": "shell_runner_context_commands_below_here"},
+
+    // "window_shellrunner_spawn_command" context menu demo entries:
+	{
+		"caption":	"spawn: open .py file in nano",
+		"command":	"window_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${file}'",
+				 	"targetExtensions": [".py"],
+				}
+	},
+	{
+		"caption":	"spawn: open pic file in geeqie",
+		"command":	"window_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "geeqie '${file}'",
+				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+				}
+	},
+	// "window_shellrunner_text_command" context menu demo entries:
+	// `- these text-return commands have a wider range of args
+	//  - so that governing the flow/placement of text can be fine tuned
+	{
+		"caption":	"txt: insert stdout in current doc",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+				 	"outputTo": "cursorInsert",
+				}
+	},
+	{
+		"caption":	"txt: continue despite non-zero shell exit",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
+				 	"outputTo": "newTab",
+				 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
+					"consoleDebug": true, // send debug messages to console for this command
+				}
+	},
+	{
+		"caption":	"txt: send stdout AND stderr to new tab",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:; echo Shell_stdout ; echo Shell_stderr 1>&2'",
+				 	"cmdCombineOutputStreams": true, // default is false, only capturing stdout
+				 	"outputTo": "newTab",
+				 	"outputTabName": "stdout-stderr-demo",
+				}
+	},
+	{
+		"caption":	"txt: default timeout (10 secs) demo",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'sleep 15; echo never_never'",
+					"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
+				}
+	},
+	{
+		"caption":	"txt: cat active file to new tab",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${file}\"",
+					"outputTo": "newTab",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 1",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'platform: ${platform}, packages: ${packages}, file: ${file}, file_path: ${file_path}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 2",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'file_name: ${file_name}, file_base_name: ${file_base_name}, project_extension: ${project_extension}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 3",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'file_extension: ${file_extension}, folder: ${folder}, project: ${project}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 4",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "echo 'project_path: ${project_path}, project_name: ${project_name}, project_base_name: ${project_base_name}'",
+					"outputTo": "msgBox",
+				}
+	},
+]}]

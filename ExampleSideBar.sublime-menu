@@ -7,7 +7,7 @@
 
 // Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
 
-[{"id": "shell_runner_sidebar_menu",	"children": [
+[{"id": "shell_runner_sidebar_commands_parent",	"children": [
 	{ "caption" : "-", "id": "shell_runner_sidebar_commands_below_here"},
 
     // "sidebar_shellrunner_spawn_command" sidebar demo entries:
@@ -33,7 +33,7 @@
 	{
 		"caption":	"txt: insert stdout in current doc",
 		"command":	"sidebar_shellrunner_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner simple insert text demo'",
 				 	"outputTo": "cursorInsert",
 				}
 	},
@@ -79,6 +79,14 @@
 				}
 	},
 	{
+		"caption":	"txt: cat sidebar selected file(s) to cursor(s)",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
+					"outputTo": "cursorInsert",
+					"files": [],
+				}
+	},
+	{
 		"caption":	"txt: replacement var demo 1",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": "echo 'platform: ${platform}, packages: ${packages}, file: ${file}, file_path: ${file_path}'",
@@ -103,6 +111,16 @@
 		"caption":	"txt: replacement var demo 4",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": "echo 'project_path: ${project_path}, project_name: ${project_name}, project_base_name: ${project_base_name}'",
+					"outputTo": "msgBox",
+				}
+	},
+	{
+		"caption":	"txt: replacement var demo 5",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": ["echo 'Selected Text:: ${selText}'; echo;",
+						"echo 'Note: The $${selText} placeholder will be replaced by a string containing '",
+						"echo 'text from all selected regions, in page order, space separated.'",
+					],
 					"outputTo": "msgBox",
 				}
 	},

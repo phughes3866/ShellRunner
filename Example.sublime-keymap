@@ -1,0 +1,46 @@
+// ShellRunner Example.sublime-keymap file.
+// This inactive file is intended to be used as a template from
+// `- which users can build their own active 'Default ${platform}.sublime-keymap'
+//  - file (which will presently be in the right hand panel if you're
+//  - using the standard key bindings edit mode of ShellRunner).
+//  - Copy entries from here to there, and save to make active.
+
+// Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
+
+[
+    // "shell_spawn_command" key bindings demo entries:
+	{
+		"keys":	[],
+		"command":	"shell_spawn_command",
+		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
+				 	"targetExtensions": [".py"], // the "files": [] arg is needed for targetExtensions to function
+				 	"files": [],
+				}
+	},
+	{
+		"keys":	[],
+		"command":	"shell_spawn_command",
+		"args":	{	"shellCommand": "geeqie '${lastFile}'",
+				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+				 	"files": [],
+				}
+	},
+	// "shell_run_text_command" key bindings demo entries:
+	// `- these text-return commands have a wider range of args
+	//  - so that governing the flow/placement of text can be fine tuned
+	{
+		"keys":	[],
+		"command":	"shell_run_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+				 	"outputTo": "cursorInsert",
+				}
+	},
+	{
+		"keys":	[],
+		"command":	"shell_run_text_command",
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
+				 	"outputTo": "newTab",
+				 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
+				}
+	},
+]

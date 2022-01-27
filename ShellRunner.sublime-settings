@@ -1,21 +1,60 @@
 {
-  // Open terminal command (leave unset to hide the 'open terminal here' menu)
-  // otherwise set to the terminal program you wish to run
-  // "open_terminal_cmd": "",
-  "open_terminal_cmd": "/usr/bin/urxvt",
+  // Open terminal command, set this to your preference e.g. "/usr/bin/urxvt"
+  // `- or set to an empty string and ShellRunner will attempt to 'best guess' your terminal emulator
+  "openTerminalCmd": "",
 
-  // default output for shell_run_text_command, one of: 'newTab', 'sublConsole', 'cursorInsert'
-  "outputTo": "newTab",
-  "outputTabName": "ShellRunner_Output.txt",
+  // Show or hide the 'Open Terminal Here' command in the sidebar and context menus
+  "showSidebarTerminalCmd": true,
+  "showContextTerminalCmd": false,
 
-  "initChangeDir": true,
-  "cmdCombineOutputStreams": false,
-  "textCmdStopOnErr": true,
-  "textCmdTimeout": 10,
+  // Show or hide the 'ShellRunner Commands' menu in the sidebar and context menus
+  "showSidebarEditMenu": true,
+  "showContextEditMenu": false,
 
-  // Enable or Disable Console Debug messages
-  "consoleDebug": true,
+  // Change directory (cd) to the target file/folder directory before running a shell command
+  // `- If left unset, this defaults to 'true', which is usually useful.
+  // "initChangeDir": true,
 
-  "contextMenu": true,
+  // Default output for shell_run_text_command, one of: 'newTab', 'sublConsole',
+  // `- 'cursorInsert', 'msgBox', 'clip', or null
+  //  - it can be useful to leave this global default unset, in which case ShellRunner will error if a
+  //  - command doesn't specify an 'outputTo' destination in its arguments
+  // "outputTo": [""],
+
+  // default new tab name when 'outputTo' is set to 'newTab'
+  // If this is not defined, new ShellRunner tabs will be untitled
+  // "outputTabName": "",
+
+  // If you want to capture both stdErr and stdOut, set 'cmdCombineOutputStreams' to true
+  // `- the default value for this is false, which only captures stdOut
+  // "cmdCombineOutputStreams": false,
+
+  // The length of time (in seconds) before a shell text command will timeout if not completed
+  // `- If left unset, it defaults to 10 seconds
+  // "textCmdTimeout": 10,
+
+  // To continue processing text when a shell command returns an error code, set this to false.
+  // `- If left unset, this defaults to true 
+  // "textCmdStopOnErr": true,
+
+  // When multiple selections are used, e.g. in ${selText}, they are concatenated into one
+  // `- string using "multiSelSeparator" as the junction string
+  // "multiSelSeparator": " ",
+
+  // Hassles with quotation marks and escape characters can regularly be avoided by representing
+  // `- selected text as a literal string
+  // "selAsLiteralStr": false,
+
+  // Ordinarily the ShellCommand shell inherits the environment (vars etc) of its parent
+  // `- To run with a clean environment set "cleanShellEnv" to true
+  // "cleanShellEnv": false,
+
+  // Extra, user defined environment variables for the shellCommand shell
+  // "extraGlobalShellEnvVars": {"HOME": "/home/override", "CAPPUCINO": "splendid"},
+
+  // Extra, user defined substitution variables (for use in shellCommand strings)
+  // "extraGlobalSubstVars": 	{ 	"drink"	:	"tea",
+	 //  							"dunk"	:	"biscuits"
+  // 						}, 
 
 }

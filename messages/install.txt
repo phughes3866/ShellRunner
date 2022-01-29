@@ -1,0 +1,31 @@
+The ShellRunner plugin has been installed
+
+Welcome To:
+===========
+
+
+  /$$$$$$  /$$                 /$$ /$$ /$$$$$$$                                                   
+ /$$__  $$| $$                | $$| $$| $$__  $$                                                  
+| $$  \__/| $$$$$$$   /$$$$$$ | $$| $$| $$  \ $$ /$$   /$$ /$$$$$$$  /$$$$$$$   /$$$$$$   /$$$$$$ 
+|  $$$$$$ | $$__  $$ /$$__  $$| $$| $$| $$$$$$$/| $$  | $$| $$__  $$| $$__  $$ /$$__  $$ /$$__  $$
+ \____  $$| $$  \ $$| $$$$$$$$| $$| $$| $$__  $$| $$  | $$| $$  \ $$| $$  \ $$| $$$$$$$$| $$  \__/
+ /$$  \ $$| $$  | $$| $$_____/| $$| $$| $$  \ $$| $$  | $$| $$  | $$| $$  | $$| $$_____/| $$      
+|  $$$$$$/| $$  | $$|  $$$$$$$| $$| $$| $$  | $$|  $$$$$$/| $$  | $$| $$  | $$|  $$$$$$$| $$      
+ \______/ |__/  |__/ \_______/|__/|__/|__/  |__/ \______/ |__/  |__/|__/  |__/ \_______/|__/      
+                                                                                                  
+
+"A Sublime Text plugin for running shell commands and utilising the returned text"
+
+ShellRunner enables Sublime Text users to run user defined shell commands from the Sublime Text sidebar menu, context menu or key bindings, and to optionally output the text returned to one (or more) of the following five destinations: a new Sublime Text tab; the edit point(s) in the active document; a message box; the Sublime Text console; the clipboard.
+
+A wide variety of substitution variables are available for building the shell commands, thus enabling aspects of Sublime Text to easily be used e.g. ${selText}, ${folder}, ${file}. ShellRunner also allows for shell environment variables to be erased, added or changed for the new command environment.
+
+As a separate feature to the 'command-running' commands ShellRunner has an 'Open Terminal Here' command, which can be configured to be displayed in the sidebar, tab and context menus. The 'Open Terminal Here' command opens a terminal emulator of your choice in a new window.
+
+FOR MORE INFORMATION AND DETAILS ON CONFIGURING SHELLRUNNER, ACCESS THE README FILE::
+
+Via the command palette: <Ctrl-Alt-P> 'ShellRunner README'
+
+OR
+
+Via github: https://github.com/phughes3866/ShellRunner/blob/master/README.md

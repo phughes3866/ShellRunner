@@ -1,4 +1,11 @@
+[![Package Control](https://img.shields.io/packagecontrol/dt/ShellRunner?style=flat-square)](https://packagecontrol.io/packages/ShellRunner)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/phughes3866/ShellRunner?style=flat-square&logo=github)](https://github.com/phughes3866/ShellRunner/tags)
+[![Project license](https://img.shields.io/github/license/phughes3866/ShellRunner?style=flat-square&logo=github)](https://github.com/phughes3866/ShellRunner/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/phughes3866/ShellRunner?style=flat-square&logo=github)](https://github.com/phughes3866/ShellRunner/stargazers)
+
 # ShellRunner Plugin README
+
+> ShellRunner is a Sublime Text Plugin for running shell commands and using the returned text for editing purposes.
 
 ShellRunner enables Sublime Text users to run user defined shell commands from the Sublime Text sidebar menu, context menu or key bindings, and to optionally output the text returned from these shell commands to one (or more) of the following five destinations: a new Sublime Text tab; the edit point(s) in the active document; a message box; the Sublime Text console; the clipboard. A wide variety of [substitution variables](#substitution-variables-for-commands) are available for building the shell commands, thus enabling aspects of Sublime Text to easily be used in the shell e.g. ${selText}, ${folder}, ${file}. Shell environment variables can also be erased, added or changed for the new command environment. As a separate feature to the 'command-running' commands ShellRunner has an 'Open Terminal Here' command, which can be configured to be displayed in the sidebar, tab and context menus. The 'Open Terminal Here' command can be configured to open a terminal emulator of your choice.
 
@@ -13,7 +20,7 @@ Installation should be carried out via package control using the [Sublime Packag
 * type `install`, select `Package Control: Install Package`
 * type `shell`, select `ShellRunner`
 
-In the case that ShellRunner is not available in the standard packagecontrol.io repository it is also possible to clone from the [ShellRunner github repository](https://github.com/the-technophobe/ShellRunner) directly into your Sublime Text *Packages* directory. Alternatively you can add this repo to Sublime's list of package repos (via command palette: Package Control: Add Repository) and install via the standard package control method (as above).
+In the case that ShellRunner is not available in the standard packagecontrol.io repository it is also possible to clone from the [ShellRunner github repository](https://github.com/phughes3866/ShellRunner) directly into your Sublime Text *Packages* directory. Alternatively you can add this repo to Sublime's list of package repos (via command palette: Package Control: Add Repository) and install via the standard package control method (as above).
 
 ## Functional Overview
 
@@ -26,12 +33,15 @@ Additionally ShellRunner provides an [Open Terminal Here](#the-open-terminal-her
 
 ## ShellRunner Configuration
 
-User configuration files will be placed in the ${packages}/User/ShellRunner folder. From zero to all four of the following files may be found there (depending on what you've implemented in your particular setup):
+After a user configures the main [settings file](#shellrunner-settings-file) it will be saved as ${packages}/User/ShellRunner.sublime-settings. Configuration of this file is essential unless you want to operate with ShellRunner's default settings.
 
-*Side Bar.sublime-menu*<br><br>
-*Context.sublime-menu*<br><br>
-*Default (${platform}).sublime-keymap*<br><br>
-*ShellRunner.sublime-settings*<br>
+Three other configuration files can be generated, depending on what you set up. These will all reside in the ${packages}/User/ShellRunner folder:
+
+*Side Bar.sublime-menu*<br>
+*Context.sublime-menu*<br>
+*Default (${platform}).sublime-keymap*<br>
+
+*Note:* If you uninstall ShellRunner you can safely delete all these four files and remove the ${packages}/User/ShellRunner folder. This is not necessary however, as leaving the files in place will do no harm to Sublime Text. If you consider that you might reinstall ShellRunner at some future date, it would be best to leave the config files in place so that you don't have to set them all up again when the reinstall takes place.
 
 ### Side Bar Menu ShellRunner Commands
 
@@ -317,11 +327,27 @@ Global ShellRunner settings are configurable in a dual panel edit window which c
 * Command Palette: Preferences: Shell Runner Settings
 * Main Menu: `Preferences` -> `Package Settings` -> `Shell Runner` -> `Settings`
 
-The user settings file (*${packages}/User/ShellRunner/ShellRunner.sublime-settings*) will appear in the right hand panel. Settings can be copied over to here from the standard plugin settings file, which will appear on the left, and then edited/saved to suit user preferences. 
+The user settings file (*${packages}/User/ShellRunner.sublime-settings*) will appear in the right hand panel. Settings can be copied over to here from the standard (default) plugin settings file, which will appear on the left, and then edited/saved to suit user preferences.
 
-The following options can be configured:
+##### .sublime-project file overrides for ShellRunner settings
 
-Note: Unless otherwise stated, the options below have no override equivalent setting as one of the [command arguments](#arguments-provided-to-shellrunner-commands).
+Additionally, if you're working in a Sublime Text project, ShellRunner settings can be defined in a named section of the .sublime-project file. Thes project settings can be opened from the `Project` -> `Edit Project` menu. 
+
+	{
+		"folders":
+		[
+			{
+				"path": "/home/me/myprojects/thisproject"
+			}
+		],
+		"ShellRunner": {
+			 "outputTabName": "ShellRunner_projdef.txt"
+		},
+	}
+
+The following ShellRunner options can be configured in any of the above settings files:
+
+Note: Unless otherwise stated, the options below do not have an equivalent in the [command arguments](#arguments-provided-to-shellrunner-commands).
 
 ###### "openTerminalCmd": ""
 

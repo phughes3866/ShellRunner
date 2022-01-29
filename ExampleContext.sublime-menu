@@ -10,88 +10,177 @@
 [{"id": "shell_runner_context_commands_parent",	"children": [
 	{ "caption" : "-", "id": "shell_runner_context_commands_below_here"},
 
-    // "window_shellrunner_spawn_command" context menu demo entries:
-	{
+    {
 		"caption":	"spawn: open .py file in nano",
 		"command":	"window_shellrunner_spawn_command",
 		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${file}'",
-				 	"targetExtensions": [".py"],
+				 	"targetExtensions": [".py"], 
 				}
 	},
 	{
-		"caption":	"spawn: open pic file in geeqie",
+		"caption":	"spawn: perform some silent shell operation",
 		"command":	"window_shellrunner_spawn_command",
-		"args":	{	"shellCommand": "geeqie '${file}'",
-				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo \"This text is echoed to nowhere.\"'",
 				}
 	},
-	// "window_shellrunner_text_command" context menu demo entries:
-	// `- these text-return commands have a wider range of args
-	//  - so that governing the flow/placement of text can be fine tuned
+	{
+		"caption":	"txt: show file stats in msgBox",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": "stat '${file}'",
+				 	"outputTo": "msgBox",
+				}
+	},
 	{
 		"caption":	"txt: insert stdout in current doc",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner insert text demo; ",
+										"echo we can continue our text over multiple lines ",
+										"if we contain each line in quotes and bracket ",
+										"the whole lot as a list.'"],
 				 	"outputTo": "cursorInsert",
+				 	"initChangeDir": false,
 				}
 	},
 	{
 		"caption":	"txt: continue despite non-zero shell exit",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell ",
+									"exit.; echo But with textCmdStopOnErr false, ",
+									"we do not fail.; exit 77;'"],
 				 	"outputTo": "newTab",
-				 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
-					"consoleDebug": true, // send debug messages to console for this command
+				 	"outputTabName": "ShellRunner_ignore_err",
+				 	"textCmdStopOnErr": false,
 				}
 	},
 	{
 		"caption":	"txt: send stdout AND stderr to new tab",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:; echo Shell_stdout ; echo Shell_stderr 1>&2'",
-				 	"cmdCombineOutputStreams": true, // default is false, only capturing stdout
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:;",
+									" echo [this is stdout text] ; echo [this is stderr text] 1>&2'"],
+				 	"cmdCombineOutputStreams": true,
 				 	"outputTo": "newTab",
 				 	"outputTabName": "stdout-stderr-demo",
 				}
 	},
 	{
-		"caption":	"txt: default timeout (10 secs) demo",
+		"caption":	"txt: command timeout (10 secs) demo",
 		"command":	"window_shellrunner_text_command",
 		"args":	{	"shellCommand": "/usr/bin/bash -c 'sleep 15; echo never_never'",
+				 	"outputTo": [ "clip", "newTab"],
+				 	"consoleDebug": true,
 					"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
 				}
 	},
 	{
-		"caption":	"txt: cat active file to new tab",
+		"caption":	"txt: using substitution variables",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${file}\"",
-					"outputTo": "newTab",
+		"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo \"\\${INTO_ENV} ",
+									"${featureA} AND ${featureB}\"; echo \"Working Dir (PWD): ${PWD}\"; ",
+									"cd \/; echo \"cd \/\"; echo \"Working Dir (PWD): ${PWD}\"; ",
+									"echo \"The above PWD outputs are the same as they were expanded / substituted at command build time\"; ",
+									"echo \"Working Dir (as expanded by shell) (PWD): \\${PWD}\";",
+									"'"
+								    ],
+					"outputTo": "msgBox",
+					"extraCmdSubstVars": 	{ 	"featureA"		:	"use shell environment vars at command build time",
+												"featureB"		:	"leave expansion of environment vars to the shell at run time"
+											},
+					"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"ShellRunner can"
+											},
+				}
+	},	{
+		"caption":	"txt: using shell env variables",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo ${INTO_ENV};",
+									"echo HOME dir = [\\${HOME}]; ",
+									"echo Current dir is: \\${PWD} - now cd to home dir; cd \\${HOME};",
+								    "echo After \"cd\" the current dir is: \\${PWD}; ",
+									"echo Note: Leave var expansion to the shell with double backslash;",
+									"echo Contra to above INTO_ENV, this is shell expanded: \\${INTO_ENV};'"],
+					"outputTo": "msgBox",
+					"cleanShellEnv": true,
+					"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"With the shell env cleared we have no HOME dir."
+											},
+				}
+	},	{
+		"caption":	"txt: hassle free quotes in variables",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					// This example shows how to use single and double quotes in Env and substitution vars
+					"shellCommand": [ "/usr/bin/bash -c 'echo \"Subst VarA: ${Sstra}\"; ",
+					                  "echo \"Subst VarB: ${Sstrb}\"; ",
+					                  "printf \"Env VarA (as subst): ${Estra}\n\"; ",
+					                  "printf \"Env VarB (as subst): ${Estrb}\n\"; ",
+					                  "echo \"Env VarA (shell expanded): \\${Estra}\"; ",
+					                  "echo \"Env VarB (shell expanded): \\${Estrb}\"; ",
+					                  "'",
+					                ],
+					"outputTo": ["msgBox", "clip"],
+					"extraCmdSubstVars":	{ 	"Sstra"	:	"This line's got single quotes. It's working fine.",
+												"Sstrb" :   "This line has \\\"double\\\" quotes. They work \\\"fine\\\" too.",
+											},
+					"extraCmdShellEnvVars":	{ 	"Estra"	:	"BEST_USE_RESTRICTED_CHARSET_FOR_ENV_VARS",
+												"Estrb"	:	"It's unclear how the mind's eye works."
+											},
+				}
+	},	{
+		"caption":	"txt: hassle free selection text",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					// some special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
+					// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
+					//  - by setting "selAsLiteralStr" to true - as follows
+					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\" ",
+									"\"Select some awkward text and run again.\n\" ",
+									"|| printf -- \"%s\" ${selText};",
+									"'"],
+					"outputTo": ["msgBox", "clip"],
+					"selAsLiteralStr": true,
+					"multiSelSeparator": "--joiner--",
 				}
 	},
 	{
-		"caption":	"txt: replacement var demo 1",
+		"caption":	"txt: substitution var demo 1",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "echo 'platform: ${platform}, packages: ${packages}, file: ${file}, file_path: ${file_path}'",
+		"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(1):\n",
+			                         "\\${platform}: ${platform}\n",
+			                         "\\${packages}: ${packages}\n",
+			                         "\\${file}: ${file}\n",
+			                         "\\${file_path}: ${file_path}'",
+				                     ],
 					"outputTo": "msgBox",
 				}
 	},
 	{
-		"caption":	"txt: replacement var demo 2",
+		"caption":	"txt: substitution var demo 2",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "echo 'file_name: ${file_name}, file_base_name: ${file_base_name}, project_extension: ${project_extension}'",
+		"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(2):\n",
+			                         "\\${file_name}: ${file_name}\n",
+			                         "\\${file_base_name}: ${file_base_name}\n",
+			                         "\\${project_extension}: ${project_extension}'",
+				                     ],
 					"outputTo": "msgBox",
 				}
 	},
 	{
-		"caption":	"txt: replacement var demo 3",
+		"caption":	"txt: substitution var demo 3",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "echo 'file_extension: ${file_extension}, folder: ${folder}, project: ${project}'",
+		"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(3):\n",
+			                         "\\${file_extension}: ${file_extension}\n",
+			                         "\\${folder}: ${folder}\n",
+			                         "\\${project}: ${project}'",
+				                     ],
 					"outputTo": "msgBox",
 				}
 	},
 	{
-		"caption":	"txt: replacement var demo 4",
+		"caption":	"txt: substitution var demo 4",
 		"command":	"window_shellrunner_text_command",
-		"args":	{	"shellCommand": "echo 'project_path: ${project_path}, project_name: ${project_name}, project_base_name: ${project_base_name}'",
+		"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(4):\n",
+			                         "\\${project_path}: ${project_path}\n",
+			                         "\\${project_name}: ${project_name}\n",
+			                         "\\${project_base_name}: ${project_base_name}'",
+				                     ],
 					"outputTo": "msgBox",
 				}
 	},

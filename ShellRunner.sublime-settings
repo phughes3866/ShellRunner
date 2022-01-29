@@ -1,3 +1,4 @@
+// ShellRunner plugin settings (installation defaults)
 {
   // Open terminal command, set this to your preference e.g. "/usr/bin/urxvt"
   // `- or set to an empty string and ShellRunner will attempt to 'best guess' your terminal emulator
@@ -22,7 +23,7 @@
   // "outputTo": [""],
 
   // default new tab name when 'outputTo' is set to 'newTab'
-  // If this is not defined, new ShellRunner tabs will be untitled
+  // If this is not defined, new ShellRunner tabs will be titled according to Sublime Text's logic
   // "outputTabName": "",
 
   // If you want to capture both stdErr and stdOut, set 'cmdCombineOutputStreams' to true

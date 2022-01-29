@@ -1,3 +1,0 @@
-[
-  { "keys": ["shift+super+c"], "command": "shell_exec_open" }
-]

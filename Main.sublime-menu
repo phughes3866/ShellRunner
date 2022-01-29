@@ -18,20 +18,20 @@
                         	      "command": "edit_settings", "args":
                         	      {
                         	          "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
-                        	          "default": "// ShellRunner User Settings (these settings override those in .../ShellRunner/ShellRunner.sublime-settings)\n{\n\t$0\n}\n"
+                        	          "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
                         	      }
                         	  },
                         	{
-                        	      "caption": "Key Bindings",
-                        	      "command": "edit_shellrunner_key_bindings",
-                        	  },
-                        	{
-                        	      "caption": "Side Bar Menu",
-                        	      "command": "edit_shellrunner_sidebar_commands",
+                        	    "caption": "Side Bar Menu",
+                        	    "command": "edit_shellrunner_sidebar_commands",
                         	  },
                         	{
                     			"caption": "Context Menu",
                     			"command": "edit_shellrunner_context_commands",
+                        	  },
+                        	{
+                        	    "caption": "Key Bindings",
+                        	    "command": "edit_shellrunner_key_bindings",
                         	  },
                         ]
                     }

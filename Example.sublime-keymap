@@ -5,42 +5,73 @@
 //  - using the standard key bindings edit mode of ShellRunner).
 //  - Copy entries from here to there, and save to make active.
 
-// Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
+// Note: The commands below are rather geared to Linux and
+// `- the Bourne Again Shell (bash).
+// Note: If you copy and implement any of the examples, 
+// `- make sure to change the key binding to suit your system.
 
 [
-    // "shell_spawn_command" key bindings demo entries:
 	{
-		"keys":	[],
-		"command":	"shell_spawn_command",
-		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
-				 	"targetExtensions": [".py"], // the "files": [] arg is needed for targetExtensions to function
-				 	"files": [],
+		"keys":	["ctrl+alt+1"],
+		"command":	"window_open_terminal_here",
+	},
+
+
+	{
+		// spawn a gnome-terminal to open .py files in the nano editor
+		"keys":	["ctrl+alt+2"],
+		"command":	"window_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${file}'",
+				 	"targetExtensions": [".py"], 
 				}
 	},
 	{
-		"keys":	[],
-		"command":	"shell_spawn_command",
-		"args":	{	"shellCommand": "geeqie '${lastFile}'",
+		// spawn a photo viewer / editor to open pic files
+		"keys":	["ctrl+alt+3"],
+		"command":	"window_shellrunner_spawn_command",
+		"args":	{	"shellCommand": "geeqie '${file}'",
 				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
-				 	"files": [],
 				}
 	},
-	// "shell_run_text_command" key bindings demo entries:
-	// `- these text-return commands have a wider range of args
-	//  - so that governing the flow/placement of text can be fine tuned
+
 	{
-		"keys":	[],
-		"command":	"shell_run_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo ShellRunner insert text demo'",
-				 	"outputTo": "cursorInsert",
+		// Handle single and double quotes in Env and substitution vars
+		// Delay the expansion of shell environment variables until shell execution time
+		"keys":	["ctrl+alt+4"],
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					"shellCommand": [ "/usr/bin/bash -c 'echo \"Subst VarA: ${Sstra}\"; ",
+					                  "echo \"Subst VarB: ${Sstrb}\"; ",
+					                  "printf \"Env VarA (as subst): ${Estra}\n\"; ",
+					                  "printf \"Env VarB (as subst): ${Estrb}\n\"; ",
+					                  "echo \"Env VarA (shell expanded): \\${Estra}\"; ",
+					                  "echo \"Env VarB (shell expanded): \\${Estrb}\"; ",
+					                  "'",
+					                ],
+					"outputTo": ["msgBox", "clip"],
+					"extraCmdSubstVars":	{ 	"Sstra"	:	"This line's got single quotes. It's working fine.",
+												"Sstrb" :   "This line has \\\"double\\\" quotes. They work \\\"fine\\\" too.",
+											},
+					"extraCmdShellEnvVars":	{ 	"Estra"	:	"BEST_USE_RESTRICTED_CHARSET_FOR_ENV_VARS",
+												"Estrb"	:	"It's unclear how the mind's eye works."
+											},
 				}
 	},
+
 	{
-		"keys":	[],
-		"command":	"shell_run_text_command",
-		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell exit.; echo But with textCmdStopOnErr false, we do not fail.; exit 77;'",
-				 	"outputTo": "newTab",
-				 	"textCmdStopOnErr": false, // the default is true, so commands don't insert text if they raise errors
+		// Handle special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
+		// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
+		//  - by setting "selAsLiteralStr" to true - as follows
+		"keys":	["ctrl+alt+s+d"],
+		"command":	"window_shellrunner_text_command",
+		"args":	{	
+					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\" ",
+									"\"No selection to print. Select one or more blocks of text and run again.\n\" ",
+									"|| printf -- \"%s\" ${selText};",
+									"'"],
+					"outputTo": ["msgBox", "clip"],
+					"selAsLiteralStr": true,
+					"multiSelSeparator": "--joiner--",
 				}
 	},
 ]

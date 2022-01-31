@@ -1,0 +1,30 @@
+[
+	{   "id": "shell_runner_sidebar_menu", "caption": "-" },
+	{
+		"caption": "Open Terminal Here",
+		"command": "sidebar_open_terminal_here",
+		"args":	{ "paths": []},
+	},
+	{
+		"caption": "ShellRunner Commands",
+		"command": "sidebar_edit_menu_viewability",
+		"id": "shell_runner_sidebar_commands_parent",
+
+		"children": [
+			{
+				"caption": "Edit Side Bar Menu Shell Commands…",
+				"command": "edit_shellrunner_sidebar_commands",
+			},
+			{"caption": "-", "id": "shell_runner_sidebar_commands_below_here"},
+			// Insert custom side bar menu commands here.
+			// See -> Command Palette: ShellRunner README for shellCommand syntax details
+			// For example:
+			// {
+			// 	"caption":	"Say Hello",
+			// 	"command":	"sidebar_shellrunner_text_command",
+			// 	"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Hello ${platform} user.; ",
+			// 									"echo Welcome to ShellRunner'"],
+			// 			 	"outputTo": "msgBox",
+			// 			}
+			// },
+]},]

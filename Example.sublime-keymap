@@ -12,14 +12,14 @@
 
 [
 	{
-		"keys":	["ctrl+alt+1"],
+		"keys":	["ctrl+alt+t"],
 		"command":	"window_open_terminal_here",
 	},
 
 
 	{
 		// spawn a gnome-terminal to open .py files in the nano editor
-		"keys":	["ctrl+alt+2"],
+		"keys":	["ctrl+alt+1"],
 		"command":	"window_shellrunner_spawn_command",
 		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${file}'",
 				 	"targetExtensions": [".py"], 
@@ -27,7 +27,7 @@
 	},
 	{
 		// spawn a photo viewer / editor to open pic files
-		"keys":	["ctrl+alt+3"],
+		"keys":	["ctrl+alt+2"],
 		"command":	"window_shellrunner_spawn_command",
 		"args":	{	"shellCommand": "geeqie '${file}'",
 				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
@@ -37,7 +37,7 @@
 	{
 		// Handle single and double quotes in Env and substitution vars
 		// Delay the expansion of shell environment variables until shell execution time
-		"keys":	["ctrl+alt+4"],
+		"keys":	["ctrl+alt+3"],
 		"command":	"window_shellrunner_text_command",
 		"args":	{	
 					"shellCommand": [ "/usr/bin/bash -c 'echo \"Subst VarA: ${Sstra}\"; ",
@@ -62,7 +62,7 @@
 		// Handle special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
 		// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
 		//  - by setting "selAsLiteralStr" to true - as follows
-		"keys":	["ctrl+alt+s+d"],
+		"keys":	["ctrl+alt+4"],
 		"command":	"window_shellrunner_text_command",
 		"args":	{	
 					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\" ",

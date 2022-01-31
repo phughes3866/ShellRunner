@@ -21,7 +21,11 @@
 		"command": "edit_shellrunner_context_commands",
 	  },
 	{
-	      "caption": "ShellRunner: README.md",
+		"caption": "Shell Runner: Factory Reset",
+		"command": "factory_reset",
+	  },
+	{
+	      "caption": "Shell Runner: README.md",
 	      "command": "open_file",
 	      "args":
 	      {

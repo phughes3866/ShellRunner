@@ -26,17 +26,6 @@
 			// 			 	"outputTo": "msgBox",
 			// 			}
 			// },
-			{
-				"caption":	"txt: continue despite non-zero shell exit",
-				"command":	"window_shellrunner_text_command",
-				"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell ",
-											"exit.; echo But with textCmdStopOnErr false, ",
-											"we do not fail.; exit 77;'"],
-						 	"outputTo": "newTab",
-						 	"outputTabName": "ShellRunner_ignore_err",
-						 	"textCmdStopOnErr": false,
-						}
-			},
 		]
 	},
 ]

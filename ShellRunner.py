@@ -5,7 +5,11 @@ import sublime_plugin
 import subprocess
 import shlex
 import shutil
+import time
 from threading import Thread
+from collections import namedtuple
+configFileGroup = namedtuple('configFileGroup', 'userFile templateFile exampleFile')
+configFiles = {}
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
 plugin_canon_name = 'ShellRunner'
@@ -27,110 +31,173 @@ def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
         return primaryDict.get(settingName, default)
 
 
+# define our global main settings with default values
+# `- this dictionary is kept up to date with
+#  - a) a callback if any of the ShellRunner.sublime-settings files are changed
+#  - b) a triggered event if a project loads (i.e. .sublime-project file is saved)
+activeSettings = {
+    "openTerminalCmd": "",
+    "showSidebarTerminalCmd": True,
+    "showContextTerminalCmd": True,
+    "showSidebarEditMenu": True,
+    "showContextEditMenu": True,
+    "initChangeDir": True,
+    "outputTo": [""],
+    "outputTabName": "",
+    "cmdCombineOutputStreams": False,
+    "textCmdTimeout": 10,
+    "textCmdStopOnErr": True,
+    "multiSelSeparator": " ",
+    "selAsLiteralStr": False,
+    "cleanShellEnv": False,
+    "extraGlobalShellEnvVars": {},
+    "extraGlobalSubstVars": {}, 
+}
+
+
+def ensureUserFilesArePresent(factoryReset=False):
+    global configFiles
+
+    curPlatform = sublime.platform()
+    if curPlatform == "osx":
+        curPlatform = "OSX"
+    else:
+        curPlatform = curPlatform.capitalize()
+    configFiles['settings'] = configFileGroup("{}.sublime-settings".format(plugin_canon_name),
+                                           "{}.settings-template".format(plugin_canon_name),
+                                           "Example.sublime-settings")
+    configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
+                                                 "Side Bar.menu-template",
+                                                 "ExampleSideBar.sublime-menu")
+    configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
+                                                 "Context.menu-template",
+                                                 "ExampleContext.sublime-menu")
+    configFiles['keyMap'] = configFileGroup("Default ({}).sublime-keymap".format(curPlatform),
+                                            "keymap.template",
+                                            "Example.sublime-keymap")
+    plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name
+    if not plugin_loose_pkg_dir.is_dir():
+        plugin_loose_pkg_dir.mkdir(parents=True, exist_ok=True)
+    # sublime.message_dialog("File names: {}".format(configFiles))
+    for key, trisomy in configFiles.items():
+        target = plugin_loose_pkg_dir / trisomy.userFile
+        if not target.is_file() or factoryReset:
+            template = sublime.load_resource("Packages/{}/{}".format(plugin_canon_name, trisomy.templateFile))
+            with open(str(target), 'w') as f:
+                f.write(template)
+                f.close()
+
+def settingsUpdateByProject(updict={}, projectFile="Unknown"):
+    global activeSettings
+    for k,v in updict.items():
+        if k in activeSettings:
+            activeSettings[k] = v
+            # print("Project File: {} has updated setting {} to {}".format(projectFile, k, v))
+        else:
+            print("Warning: Unknown ShellRunner setting [{}] in {} (Ignored)".format(k, projectFile))
+    # print("After settingsUpdateByProject, activeSettings = {}".format(activeSettings))
+
+def plugin_loaded():
+
+    ensureUserFilesArePresent()
+    srSettings = sublime.load_settings('ShellRunner.sublime-settings')
+
+    def readInProjectSettings():
+        if sublime.active_window().project_data():
+            proj_plugin_settings = sublime.active_window().project_data().get(plugin_canon_name, None)
+            if proj_plugin_settings:
+                # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
+                settingsUpdateByProject(proj_plugin_settings, sublime.active_window().project_file_name())
+
+    def readInUserSettings():
+        global activeSettings
+        for key, value in activeSettings.items():
+            pulledInAfresh = srSettings.get(key)
+            print("{}: {}".format(key, pulledInAfresh))
+            if pulledInAfresh is not None:
+                print('`- saved as not None')
+                activeSettings[key] = pulledInAfresh
+        print("After settings update by ShellRunner.sublime-settings:\n`- Settings = {}".format(activeSettings))
+        readInProjectSettings()
+
+    # read initial setting
+    readInUserSettings()
+    # listen for changes
+    srSettings.add_on_change('ShellRunner', readInUserSettings)
+
+    
+
+class FactoryResetCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        ans = sublime.ok_cancel_dialog(
+            "Do you really want to perform a factory reset?\n\n"
+            "This will erase all {} user settings you have implemented, "
+            "and return ShellRunner to a virgin install state.\n\n"
+            "THIS OPERATION CANNOT BE UNDONE".format(plugin_canon_name)
+        )
+        if not ans:
+            return
+        ensureUserFilesArePresent(factoryReset=True)
+
+
+class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
+    def on_load_project(self, window):
+        global Settings
+        proj_plugin_settings = window.project_data().get(plugin_canon_name, None)
+        if proj_plugin_settings:
+            # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
+            settingsUpdateByProject(proj_plugin_settings, window.project_file_name())
+
+
+def editConfigFile(thisGrp, thisWindow):
+    targetFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
+    args = {"base_file": "${packages}/" + plugin_canon_name + "/" + thisGrp.exampleFile,
+            "user_file": "{}".format(str(targetFile)),
+            }
+    thisWindow.run_command('edit_settings', args)
+
+
 class EditShellrunnerSidebarCommandsCommand(sublime_plugin.WindowCommand):
-    def run(self, **kwargs):
-        package_dir = self.window.extract_variables().get('packages')
-        if os.path.isdir(package_dir):
-            plugin_user_dir = pathlib.Path(package_dir) / 'User' / plugin_canon_name
-            plugin_user_dir.mkdir(parents=True, exist_ok=True)
-            args = {"base_file": "${packages}/ShellRunner/ExampleSideBar.sublime-menu",
-                    "user_file": "${packages}/User/ShellRunner/Side Bar.sublime-menu",
-                    "default": ("[{\"id\": \"shell_runner_sidebar_menu\", \"children\": [\n"
-                                "\t{ \"caption\" : \"-\", \"id\": \"shell_runner_user_commands_below_here\"},\n"
-                                "\t// Insert user defined ShellRunner sidebar-menu commands below here\n"
-                                "\t$0\n\n"
-                                "]}]")
-                    }
-            self.window.run_command('edit_settings', args)
+    def run(self):
+        editConfigFile(configFiles['sideBarMenu'], self.window)
 
 
 class EditShellrunnerContextCommandsCommand(sublime_plugin.WindowCommand):
-    def run(self, **kwargs):
-        package_dir = self.window.extract_variables().get('packages')
-        if os.path.isdir(package_dir):
-            plugin_user_dir = pathlib.Path(package_dir) / 'User' / plugin_canon_name
-            plugin_user_dir.mkdir(parents=True, exist_ok=True)
-            args = {"base_file": "${packages}/ShellRunner/ExampleContext.sublime-menu",
-                    "user_file": "${packages}/User/ShellRunner/Context.sublime-menu",
-                    "default": ("[{\"id\": \"shell_runner_context_menu\", \"children\": [\n"
-                                "\t{ \"caption\" : \"-\", \"id\": \"shell_runner_context_commands_below_here\"},\n"
-                                "\t// Insert user defined ShellRunner context-menu commands below here\n"
-                                "\t$0\n\n"
-                                "]}]")
-                    }
-            self.window.run_command('edit_settings', args)
-
-
-class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
-    """
-    A wrapper to be used for parent menus (command-less) to make them visible only in certain scopes/contexts.
-    The class overrides the 'is_visible' method so it returns True only when the current scope matches the target scope
-    """
-    def __init__(self, window, sbMode=True):
-        super().__init__(window)
-        self.shrunner_settings = loadPluginAndProjSettings(self.window)
-        if sbMode:
-            self.viewMe = self.shrunner_settings.get("showSidebarEditMenu", False)
-        else:
-            self.viewMe = self.shrunner_settings.get("showContextEditMenu", False)
-        if not isinstance(self.viewMe, bool):
-            self.viewMe = False
-
     def run(self):
-        pass
-
-    def is_visible(self):
-        return self.viewMe
-
-
-class ContextEditMenuViewabilityCommand(SidebarEditMenuViewabilityCommand):
-    def __init__(self, window):
-        super().__init__(window, sbMode=False)
+        editConfigFile(configFiles['contextMenu'], self.window)
 
 
 class EditShellrunnerKeyBindingsCommand(sublime_plugin.WindowCommand):
-    def run(self, **kwargs):
-        package_dir = self.window.extract_variables().get('packages')
-        if os.path.isdir(package_dir):
-            plugin_user_dir = pathlib.Path(package_dir) / 'User' / plugin_canon_name
-            plugin_user_dir.mkdir(parents=True, exist_ok=True)
-            args = {"base_file": "${packages}/ShellRunner/Example.sublime-keymap",
-                    "user_file": "${packages}/User/ShellRunner/Default (${platform}).sublime-keymap",
-                    "default": ("// This file is for user defined key bindings associated with the ShellRunner plugin\n"
-                                "[\n\t// Insert key bindings below here:"
-                                "\n\t//$0{ \"keys\":     [\"ctrl+shift+c\"],"
-                                "\n\t//\t\"command\":    \"shell_run_text_command\","   
-                                "\n\t//\t\"args\"    :   {   \"shellCommand\": \"/usr/bin/bash -c 'echo ShellRunner insert text demo'\","   
-                                "\n\t//\t\t\t\t\"outputTo\": \"cursorInsert\","   
-                                "\n\t//\t\t\t}\n\t//},\n]")
-                    }
-            self.window.run_command('edit_settings', args)
+    def run(self):
+        editConfigFile(configFiles['keyMap'], self.window)
 
 
-class SidebarOpenTerminalHereCommand(sublime_plugin.WindowCommand):
-    def __init__(self, window, sbMode=True):
+class EditShellrunnerSettingsCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        editConfigFile(configFiles['settings'], self.window)
+
+
+class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
+    def is_visible(self):
+        return activeSettings.get("showSidebarEditMenu", False)
+
+
+class ContextEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
+    def is_visible(self):
+        return activeSettings.get("showContextEditMenu", False)
+
+
+class OpenTerminalHereCommand(sublime_plugin.WindowCommand):
+    def __init__(self, window, sideBarMode=None):
         super().__init__(window)
-        self.sbMode = sbMode
-        self.shrunner_settings = loadPluginAndProjSettings(self.window)
-        self.termCmd = self.shrunner_settings.get("openTerminalCmd", None)
-        if self.termCmd is not None:
-            if self.termCmd == "":
-                # "openTerminalCmd" is set to an empty string so we can search for a likely term emulator
-                for termprog in ["xterm", "gnome-terminal", "konsole"]:
-                    pathStr = shutil.which(termprog)
-                    if pathStr:
-                        self.termCmd = pathStr
-                        break
-        # If the "openTerminalCmd" is defined then we can enable the 'Open Terminal' menu command
-        # `- so long as the settings also indicate we can show such:
-        if self.sbMode:  # sidebar mode
-            self.settingsSayShow = self.shrunner_settings.get("showSidebarTerminalCmd", False)
-        else:  # window mode (via keybind or context menu)
-            self.settingsSayShow = self.shrunner_settings.get("showContextTerminalCmd", False)
-        self.showCmd = bool(self.termCmd) and self.settingsSayShow
+        self.sideBarMode = sideBarMode
 
     def is_visible(self, **kwargs):
-        return self.showCmd
+        if self.sideBarMode:  # sidebar mode
+            return activeSettings.get("showSidebarTerminalCmd", False)
+        else:  # window mode (via keybind or context menu)
+            return activeSettings.get("showContextTerminalCmd", False)
+        # return bool(self.termCmd) and self.settingsSayShow
 
     def is_enabled(self, **kwargs):
         # Always return True for this as allows keybind to work even if menu 'is_visible' is disabled
@@ -138,7 +205,31 @@ class SidebarOpenTerminalHereCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
         self.cmdArgs = kwargs
-        if not self.sbMode:  # window / context mode
+        self.termCmd = activeSettings.get("openTerminalCmd", None)
+        if self.termCmd is not None:
+            if self.termCmd == "":
+                # "openTerminalCmd" is set to an empty string so we can search for a likely term emulator
+                foundOne = False
+                for termprog in ["xterm", "gnome-terminal", "konsole"]:
+                    pathStr = shutil.which(termprog)
+                    if pathStr:
+                        self.termCmd = pathStr
+                        foundOne = True
+                        break
+                if not foundOne:
+                    showShRunnerError("Cannot locate a terminal emulator program on your system.\n\n"
+                                        "The \"openTerminalCmd\" is set to an empty string in your ShellRunner "
+                                        "settings. This causes ShellRunner to search for a suitable terminal "
+                                        "emulator, which has just been done without satisfaction.\n\n"
+                                        "Please consider setting \"openTerminalCmd\" to a valid terminal emulator "
+                                        "command string.")
+                    return
+
+        else:
+            print("ShellRunner WARNING: Trying to open a terminal without \"openTerminalCmd\" being defined.")
+            return
+
+        if not self.sideBarMode:  # window / context mode
             change_dir = self.window.extract_variables().get('file_path', '.')
         else:  # sidebar mode
             pathsList = self.cmdArgs.get('paths', [])
@@ -152,10 +243,13 @@ class SidebarOpenTerminalHereCommand(sublime_plugin.WindowCommand):
         cmd_array = splitCommand(self.termCmd)
         subprocess.Popen(cmd_array, cwd=change_dir)
 
-
-class WindowOpenTerminalHereCommand(SidebarOpenTerminalHereCommand):
+class WindowOpenTerminalHereCommand(OpenTerminalHereCommand):
     def __init__(self, window):
-        super().__init__(window, sbMode=False)
+        super().__init__(window, sideBarMode=False)
+
+class SidebarOpenTerminalHereCommand(OpenTerminalHereCommand):
+    def __init__(self, window):
+        super().__init__(window, sideBarMode=True)
 
 
 def buildPathFileDirSidebarItemStrings(argsDict):
@@ -193,12 +287,25 @@ def truncateStr(thisStr, chopFront=False, dotStr="...", length=35):
 
 
 class DebugLogger():
-    def __init__(self, commandStr, prefix=""):
+    def __init__(self, commandStr, prefix="", consoleMode=True, tabReport=False):
         self.cs = truncateStr(commandStr)
         self.prefix = prefix
+        self.consoleMode = consoleMode
+        self.tabReport = tabReport
+        self.report = ""
 
     def log(self, logmsg=""):
-        print("{}:[[CMD:{}]]:{}".format(self.prefix, self.cs, logmsg))
+        if self.consoleMode:
+            print("{}:[[CMD:{}]]:{}".format(self.prefix, self.cs, logmsg))
+        if self.tabReport:
+            self.report += "{}:[[CMD:{}]]:{}\n".format(self.prefix, self.cs, logmsg)
+
+    def finalReport(self):
+        self.output_file = sublime.active_window().new_file()
+        self.output_file.set_name("SR Debug Report")
+        self.output_file.run_command('view_insert_big_text', {'pos': self.output_file.size(), 'text': self.report})
+
+
 
 def deListCmd(cmdMightBeList):
     if isinstance(cmdMightBeList, list):
@@ -207,88 +314,88 @@ def deListCmd(cmdMightBeList):
         return cmdMightBeList
 
 def amIEnabled(visArgs, windowVars={}, sbMode=True):
+    enablementRep = ""
+    def buildRep(addStr):
+        nonlocal enablementRep
+        enablementRep += addStr
     visMe = True
     DEBUG = visArgs.get('consoleDebug', False)
-    db = DebugLogger(deListCmd(visArgs.get('shellCommand', "NO COMMAND!")), prefix="ShellRunner Check Cmd Enablement")
+    DEBUG = True
+    DEBUG and buildRep('*************************************\n')
+    DEBUG and buildRep("ShellRunner Command Enablement Check:\n"
+                       "=====================================\n" 
+                       "- Target Command: {}\n".format(truncateStr(deListCmd(visArgs.get('shellCommand', "NO COMMAND!")))))
     targetExtns = visArgs.get('targetExtensions', False)
     if sbMode:
-        DEBUG and db.log('Sidebar Mode Check')
+        DEBUG and buildRep("- Sidebar Menu Mode Check\n")
         dirOnly = visArgs.get('dirOnly', False)
         extraForDirs = "(or dir) "
     else:
-        DEBUG and db.log('Window Mode Check')
+        DEBUG and buildRep("- Context Menu or Key Bind Mode Check\n")
         # the 'dirOnly' arg has no place in a 'window' command, ignore it if is set
         dirOnly = False
         extraForDirs = ""
     if targetExtns:
-        DEBUG and db.log("Valid file extns: {}".format(targetExtns))
+        DEBUG and buildRep("- File extension match required\n")
+        DEBUG and buildRep("- Extensions to match = {}\n".format(targetExtns))
         visMe = False  # until proven otherwise
         # NB: the initial dot/period must be included for each of targetExtensions e.g. ".jpg" not "jpg"
         #    ` multipart extensions are not catered for e.g. ".tar.gz" will never match, but ".gz" will
         if sbMode:
             lastSelectedSidebarPath = ""
+            DEBUG and buildRep("-- Looking for last selected sidebar file via [files] arg\n")
             sbFiles = visArgs.get('files', False)
             if sbFiles:
                 lastSelectedSidebarPath = sbFiles[0]
-                DEBUG and db.log('Last selected sidebar file to match = {}'.format(truncateStr(lastSelectedSidebarPath, length=25, chopFront=True)))
+                DEBUG and buildRep('-- Last selected sidebar file to match = {}\n'.format(truncateStr(lastSelectedSidebarPath, length=25, chopFront=True)))
             else:
+                DEBUG and buildRep("-- [files] arg not available, looking via [paths] arg\n")
                 sbPaths = visArgs.get('paths', False)
                 if sbPaths:
                     lastSelectedSidebarPath = sbPaths[0]
-                    DEBUG and db.log('Last selected sidebar path to match = {}'.format(truncateStr(lastSelectedSidebarPath, length=25, chopFront=True)))
+                    DEBUG and buildRep('-- Last selected sidebar path to match = {}\n'.format(truncateStr(lastSelectedSidebarPath, length=25, chopFront=True)))
                     if os.path.isfile(sbPaths[0]):
-                        DEBUG and db.log('Last selected sidebar path is a file')
+                        DEBUG and buildRep('-- Path found is a file\n')
                         lastSelectedSidebarPath = sbPaths[0]
                     else:
-                        DEBUG and db.log('Last selected sidebar path is NOT a file')
+                        DEBUG and buildRep('Path found is NOT a file\n')
                 else:
-                    DEBUG and db.log("No sidebar 'files':[] or 'paths': [] to check against allowed extensions")
+                    DEBUG and buildRep("-- WARNING: No sidebar 'files':[] or 'paths': [] args via which to acquire file to match\n")
             fileToCheckExtn = lastSelectedSidebarPath
         else:  # not sidebar mode i.e. key bind or context menu
             fileToCheckExtn = windowVars.get('file')
-            DEBUG and db.log('Window file to match = {}'.format(truncateStr(fileToCheckExtn, length=25, chopFront=True)))
+            DEBUG and buildRep('-- Active window file to match = {}\n'.format(truncateStr(fileToCheckExtn, length=25, chopFront=True)))
         if fileToCheckExtn:
             # targetExtn entries must be preceeded by a dot to work
             haveExtn = os.path.splitext(fileToCheckExtn)[1]
             if haveExtn in targetExtns:
-                DEBUG and db.log('Target file extension ({}) matches.'.format(haveExtn))
+                DEBUG and buildRep('-- Target file extension ({}) matches\n'.format(haveExtn))
                 visMe = True
             else:
-                DEBUG and db.log('Target file extension ({}) does not match.'.format(haveExtn))
+                DEBUG and buildRep('-- Target file extension ({}) does not match\n'.format(haveExtn))
         else:
-            DEBUG and db.log('No target file found on which to perform match check.')
+            DEBUG and buildRep('-- No target file found on which to perform match check.\n')
     elif dirOnly:
-        DEBUG and db.log('Directory Only Command')
+        DEBUG and buildRep('- Command valid only for directories i.e. "dirOnly" set in args (must be sidebar mode)\n')
         visMe = False
         if visArgs.get('dirs', False):
-            DEBUG and db.log('Directory detected in sidebar selections')
+            DEBUG and buildRep('- Directory detected in sidebar selections (via [dirs] arg)\n')
             # If any directory is selected
             visMe = True
         else:
-            DEBUG and db.log('No sidebar directory selection detected (is dirs arg provided)')
+            DEBUG and buildRep('- No sidebar directory selection detected (is [dirs] arg provided)\n')
     else:
-        DEBUG and db.log("No file extension {}restrictions found in args.".format(extraForDirs))
-    DEBUG and db.log('Command Visible/Enabled = {}'.format(visMe))
+        DEBUG and buildRep("No file extension {}restrictions found in args".format(extraForDirs))
+    DEBUG and buildRep('Command Visible/Enabled = {}\n'.format(visMe))
+    DEBUG and buildRep('*************************************\n')
+    DEBUG and print("{}".format(enablementRep))
     return visMe
-
-
-def loadPluginAndProjSettings(curWindow):
-    # load the main settings from a) the install settings file, and b) the user settings file
-    # `- note that the user settings file takes precedence
-    theSettings = sublime.load_settings(plugin_settings_file)
-    # if we're in a project, and we have a 'ShellRunner' section in the project file - load it
-    # `- entries in this project file dictionary take precedence over plugin and user settings
-    if curWindow.project_data():
-        proj_plugin_settings = curWindow.project_data().get(plugin_canon_name, None)
-        if proj_plugin_settings:
-            # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
-            theSettings.update(proj_plugin_settings)
-    return theSettings
 
 
 class argChecker():
 
-    def __init__(self):
+    def __init__(self, cmdArgs):
+        self.cmdArgs = cmdArgs
         self.origCmd200CharStr = "<cmd not yet defined: pre-processing>"
 
     def reportArgError(self, errorStr):
@@ -310,7 +417,7 @@ class argChecker():
             #  - ${file_extension} ${folder} ${project} ${project_path} ${project_name} ${project_base_name}
             replacementVars = self.window.extract_variables()
             # B: Use shell env vars in substitution string if cleanShellEnv is not set
-            self.cmdArgs["cleanShellEnv"] = retrieveSetting("cleanShellEnv", self.cmdArgs, self.shrunner_settings, default=False)
+            self.cmdArgs["cleanShellEnv"] = retrieveSetting("cleanShellEnv", self.cmdArgs, activeSettings, default=False)
             if not self.cmdArgs["cleanShellEnv"]:
                 replacementVars.update(os.environ.copy())
             # C: if we're in sidebar mode: compile available strings of side bar selected items
@@ -319,20 +426,20 @@ class argChecker():
             if self.sideBarMode:
                 replacementVars.update(buildPathFileDirSidebarItemStrings(self.cmdArgs))
             # D: get any extra, user defined "global" substitution variables
-            substVars = retrieveSetting("extraGlobalSubstVars", self.shrunner_settings, default={})
+            substVars = retrieveSetting("extraGlobalSubstVars", activeSettings, default={})
             # E: get any extra, user defined "local" command-arg substitution variables
             substVars.update(retrieveSetting("extraCmdSubstVars", self.cmdArgs, default={}))
             replacementVars.update(substVars)
             # F: build a dictionary of new env vars from global and cmd args settings
             # `- we use it here for substitution vars, later it will update the shell environment
-            self.cmdArgs["exportEnv"] = retrieveSetting("extraGlobalShellEnvVars", self.shrunner_settings, default={})
+            self.cmdArgs["exportEnv"] = retrieveSetting("extraGlobalShellEnvVars", activeSettings, default={})
             self.cmdArgs["exportEnv"].update(retrieveSetting("extraCmdShellEnvVars", self.cmdArgs, default={}))
             replacementVars.update(self.cmdArgs["exportEnv"])
             # F: add one (or all) selected region(s), (and separated by 'multiSelSeparator') - ${selText}
             sel = self.window.active_view().sel()
             replacementVars["selText"] = ""
-            selSeparator = retrieveSetting("multiSelSeparator", self.cmdArgs, self.shrunner_settings, default=" ")
-            selLiteral = retrieveSetting("selAsLiteralStr", self.cmdArgs, self.shrunner_settings, default=False)
+            selSeparator = retrieveSetting("multiSelSeparator", self.cmdArgs, activeSettings, default=" ")
+            selLiteral = retrieveSetting("selAsLiteralStr", self.cmdArgs, activeSettings, default=False)
             buildAll = []
             for s in sel:
                 foundStr = self.window.active_view().substr(s)
@@ -369,7 +476,7 @@ class argChecker():
         
         # :Step A2: Check 'initChangeDir' setting to see if we should change dir, to file loc, before running command
         # Note: We read this as 'boolean' but change it to a path (str) of the directory into which we'll cd
-        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, self.shrunner_settings, default=True)
+        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, activeSettings, default=True)
         if not isinstance(doChgDir, bool):
             self.reportArgError("\"initChangeDir\" must be defined [true or false (type=bool)].\n\n"
                                 "The current setting [{} (type={})] is invalid.".format(doChgDir, type(doChgDir)))
@@ -390,7 +497,7 @@ class argChecker():
 
         # now check additional args that are relevant to the text manipulation commands
         # :Step B1: Check 'outputTo' is defined correctly:
-        output_dest_list = retrieveSetting("outputTo", self.cmdArgs, self.shrunner_settings, default=[])
+        output_dest_list = retrieveSetting("outputTo", self.cmdArgs, activeSettings, default=[])
         # be careful with the null setting in json, which is read as None into python
         if isinstance(output_dest_list, str) or output_dest_list is None:
             output_dest_list = [output_dest_list]
@@ -406,11 +513,11 @@ class argChecker():
         self.DEBUG and self.db.log("\"outputTo\" (as list)  = {}".format(self.cmdArgs["outputTo"]))
 
         # :Step B2: Prepare 'newTabName' from settings (if this is None, that's OK, we just have a nameless new tab)
-        self.cmdArgs["newTabName"] = retrieveSetting("outputTabName", self.cmdArgs, self.shrunner_settings)
+        self.cmdArgs["newTabName"] = retrieveSetting("outputTabName", self.cmdArgs, activeSettings)
         self.DEBUG and self.db.log("\"newTabName\"  = {}".format(self.cmdArgs["newTabName"]))
 
         # :Step B3: Check 'cmdCombineOutputStreams' setting to see if we should merge stdout and stderr from command
-        self.cmdArgs["cmdCombineOutputStreams"] = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, self.shrunner_settings, default=False)
+        self.cmdArgs["cmdCombineOutputStreams"] = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, activeSettings, default=False)
         if not isinstance(self.cmdArgs["cmdCombineOutputStreams"], bool):
             self.reportArgError("\"cmdCombineOutputStreams\" must be defined [true or false (type=bool)].\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["cmdCombineOutputStreams"], type(self.cmdArgs["cmdCombineOutputStreams"])))
@@ -418,7 +525,7 @@ class argChecker():
         self.DEBUG and self.db.log("\"cmdCombineOutputStreams\"  = {}".format(self.cmdArgs["cmdCombineOutputStreams"]))
 
         # :Step B4: Check 'textCmdTimeout' setting to see if we should set a timeout for our command    
-        self.cmdArgs["textCmdTimeout"] = retrieveSetting("textCmdTimeout", self.cmdArgs, self.shrunner_settings, default=10)
+        self.cmdArgs["textCmdTimeout"] = retrieveSetting("textCmdTimeout", self.cmdArgs, activeSettings, default=10)
         if not isinstance(self.cmdArgs["textCmdTimeout"], int):
             self.reportArgError("\"textCmdTimeout\" should contain the number of seconds, as an integer, after which to timeout the command.\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["textCmdTimeout"], type(self.cmdArgs["textCmdTimeout"])))
@@ -428,7 +535,7 @@ class argChecker():
         self.DEBUG and self.db.log("\"textCmdTimeout\"  = {}".format(self.cmdArgs["textCmdTimeout"]))
 
         # :Step B5: Check 'textCmdStopOnErr' setting to see if we should stop on shell errors    
-        self.cmdArgs["textCmdStopOnErr"] = retrieveSetting("textCmdStopOnErr", self.cmdArgs, self.shrunner_settings, default=True)
+        self.cmdArgs["textCmdStopOnErr"] = retrieveSetting("textCmdStopOnErr", self.cmdArgs, activeSettings, default=True)
         if not isinstance(self.cmdArgs["textCmdStopOnErr"], bool):
             self.reportArgError("\"textCmdStopOnErr\" must be defined [true or false (type=bool)].\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["textCmdStopOnErr"], type(self.cmdArgs["textCmdStopOnErr"])))
@@ -543,7 +650,8 @@ class runShellCommand(Thread):
                         # save rxText in an object attribute for processing after this thread is completed
                         self.outputMsgBox = rxText
                     elif destination == "clip":
-                        subprocess.Popen(('xsel', '-i', '-b'), stdin=subprocess.PIPE).communicate(bytearray(rxText, 'utf-8'))
+                        sublime.set_clipboard(rxText)
+                        # subprocess.Popen(('xsel', '-i', '-b'), stdin=subprocess.PIPE).communicate(bytearray(rxText, 'utf-8'))
         else:
             self.DEBUG and self.db.log("Non Text Command spawning complete")
             self.commandSuccess = True
@@ -618,6 +726,8 @@ class WindowShellrunnerTextCommandCommand(sublime_plugin.WindowCommand, argCheck
         super().__init__(window)
         argChecker.__init__(self)
         self.sideBarMode = sbMode
+        self.DEBUG = False
+        self.db = None
 
     def focus(self, window_to_move_to):
         active_view = window_to_move_to.active_view()
@@ -625,13 +735,15 @@ class WindowShellrunnerTextCommandCommand(sublime_plugin.WindowCommand, argCheck
             window_to_move_to.focus_view(active_view)
 
     def run(self, **kwargs):
-        # Initialise Command Args and Plugin Settings
         self.cmdArgs = kwargs
-        self.shrunner_settings = loadPluginAndProjSettings(self.window)
-        # Sanitise self.cmdArgs before running the command
-        self.DEBUG = self.cmdArgs.get('consoleDebug', False)
-        self.db = DebugLogger(self.cmdArgs.get('shellCommand', "NO COMMAND!"), prefix="ShellRunner Check Cmd Args")
+        if self.cmdArgs.get('consoleDebug', False) or self.cmdArgs.get('tabDebugReport', False):
+            self.DEBUG = True
+            self.db = DebugLogger(deListCmd(self.cmdArgs.get('shellCommand', "NO COMMAND!")),
+                                    prefix="ShellRunner Check Cmd Args",
+                                    consoleMode = self.cmdArgs.get('consoleDebug', False),
+                                    tabReport = self.cmdArgs.get('tabDebugReport', False))
 
+        # Sanitise self.cmdArgs before running the command
         if not self.sanitiseTextCmdArgs():
             return
         # All sanitised OK, so run the command as a thread and show its progress in the status bar
@@ -640,6 +752,10 @@ class WindowShellrunnerTextCommandCommand(sublime_plugin.WindowCommand, argCheck
         status_message = "ShellRunner running: {}".format(self.cmdArgs["origCmd50CharLabel"])
         ThreadProgress(doTxtCommand, status_message, "ShellRunner command completed OK")
         self.focus(self.window)
+        self.DEBUG and self.db.finalReport()
+
+    def is_visible(self):
+        return True
         
     def is_enabled(self, **tkwargs):
         self.visArgs = tkwargs
@@ -657,19 +773,24 @@ class WindowShellrunnerSpawnCommandCommand(sublime_plugin.WindowCommand, argChec
         super().__init__(window)
         argChecker.__init__(self)
         self.sideBarMode = sbMode
+        self.DEBUG = False
+        self.db = None
 
     def run(self, **kwargs):
-        # Initialise Command Args and Plugin Settings
         self.cmdArgs = kwargs
-        self.shrunner_settings = loadPluginAndProjSettings(self.window)
-        # Sanitise self.cmdArgs before running the command
-        self.DEBUG = self.cmdArgs.get('consoleDebug', False)
-        self.db = DebugLogger(self.cmdArgs.get('shellCommand', "NO COMMAND!"), prefix="ShellRunner Check Cmd Args")
+        if self.cmdArgs.get('consoleDebug', False) or self.cmdArgs.get('tabDebugReport', False):
+            self.DEBUG = True
+            self.db = DebugLogger(deListCmd(self.cmdArgs.get('shellCommand', "NO COMMAND!")),
+                                    prefix="ShellRunner Check Cmd Args",
+                                    consoleMode = self.cmdArgs.get('consoleDebug', False),
+                                    tabReport = self.cmdArgs.get('tabDebugReport', False))
 
+        # Sanitise self.cmdArgs before running the command
         if not self.sanitiseSpawnCmdArgs():
             return
         doSpawnCommand = runShellCommand(self.cmdArgs)
         doSpawnCommand.start()
+        self.DEBUG and self.db.finalReport()
 
     def is_enabled(self, **tkwargs):
         self.visArgs = tkwargs

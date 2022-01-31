@@ -6,11 +6,11 @@
 
   // Show or hide the 'Open Terminal Here' command in the sidebar and context menus
   "showSidebarTerminalCmd": true,
-  "showContextTerminalCmd": true,
+  "showContextTerminalCmd": false,
 
   // Show or hide the 'ShellRunner Commands' menu in the sidebar and context menus
   "showSidebarEditMenu": true,
-  "showContextEditMenu": true,
+  "showContextEditMenu": false,
 
   // Change directory (cd) to the target file/folder directory before running a shell command
   // `- If left unset, this defaults to 'true', which is usually useful.

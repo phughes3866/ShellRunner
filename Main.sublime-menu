@@ -15,11 +15,12 @@
                         [
                         	{
                         	      "caption": "Settings",
-                        	      "command": "edit_settings", "args":
-                        	      {
-                        	          "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
-                        	          "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
-                        	      }
+                        	      "command": "edit_shellrunner_settings"
+                        	      // , "args":
+                        	      // {
+                        	      //     "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
+                        	      //     "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
+                        	      // }
                         	  },
                         	{
                         	    "caption": "Side Bar Menu",

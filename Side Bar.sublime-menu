@@ -41,12 +41,14 @@
 				{
 					"caption":	"txt: insert stdout in current doc",
 					"command":	"sidebar_shellrunner_text_command",
-					"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner insert text demo; ",
-													"echo we can continue our text over multiple lines ",
-													"if we contain each line in quotes and bracket ",
-													"the whole lot as a list.'"],
+					"args":	{	
+						// "shellCommand": ["/usr/bin/bash -c 'echo ShellRunner insert text demo; ",
+						// 							"echo we can continue our text over multiple lines ",
+						// 							"if we contain each line in quotes and bracket ",
+						// 							"the whole lot as a list.'"],
 							 	"outputTo": "cursorInsert",
 							 	"initChangeDir": false,
+							 	"tabDebugReport": true,
 							}
 				},
 				{
@@ -58,6 +60,8 @@
 							 	"outputTo": "newTab",
 							 	"outputTabName": "ShellRunner_ignore_err",
 							 	"textCmdStopOnErr": false,
+							 	// "consoleDebug": true,
+							 	"tabDebugReport": true,
 							}
 				},
 				{

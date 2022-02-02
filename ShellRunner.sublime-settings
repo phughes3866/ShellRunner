@@ -2,7 +2,7 @@
 {
   // Open terminal command, set this to your preference e.g. "/usr/bin/urxvt"
   // `- or set to an empty string and ShellRunner will attempt to 'best guess' your terminal emulator
-  "openTerminalCmd": "",
+  "openTerminalCmd": " \"/usr/bin/urxvt; \"\"",
 
   // Show or hide the 'Open Terminal Here' command in the sidebar and context menus
   "showSidebarTerminalCmd": true,

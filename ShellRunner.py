@@ -39,11 +39,11 @@ class splitCommand():
                               "Details:: {}\n\n{}").format(self.cmdStr, err.__class__.__name__, err)
 
 
-def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
-    if secondaryDict:
-        return primaryDict.get(settingName, secondaryDict.get(settingName, default))
-    else:
-        return primaryDict.get(settingName, default)
+# def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
+#     if secondaryDict:
+#         return primaryDict.get(settingName, secondaryDict.get(settingName, default))
+#     else:
+#         return primaryDict.get(settingName, default)
 
 
 # define our global main settings with default values
@@ -51,24 +51,48 @@ def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
 #  - a) a callback if any of the ShellRunner.sublime-settings files are changed
 #  - b) a triggered event if a project loads (i.e. .sublime-project file is saved)
 activeSettings = {
-    "openTerminalCmd": "",
-    "showSidebarTerminalCmd": True,
-    "showContextTerminalCmd": True,
-    "showSidebarEditMenu": True,
-    "showContextEditMenu": True,
-    "initChangeDir": True,
-    "outputTo": [""],
-    "outputTabName": "",
-    "cmdCombineOutputStreams": False,
-    "textCmdTimeout": 10,
-    "textCmdStopOnErr": True,
-    "multiSelSeparator": " ",
-    "selAsLiteralStr": False,
-    "cleanShellEnv": False,
-    "extraGlobalShellEnvVars": {},
-    "extraGlobalSubstVars": {}, 
+    "openTerminalCmd": {"usr": "", "def": ""},
+    "showSidebarTerminalCmd": {"usr": True, "def": True},
+    "showContextTerminalCmd": {"usr": True, "def": True},
+    "showSidebarEditMenu": {"usr": True, "def": True},
+    "showContextEditMenu": {"usr": True, "def": True},
+    "initChangeDir": {"usr": True, "def": True},
+    "outputTo": {"usr": [""], "def": [""]},
+    "outputTabName": {"usr": "", "def": ""},
+    "cmdCombineOutputStreams": {"usr": False, "def": False},
+    "textCmdTimeout": {"usr": 10, "def": 10},
+    "textCmdStopOnErr": {"usr": True, "def": True},
+    "multiSelSeparator": {"usr": " ", "def": " "},
+    "selAsLiteralStr": {"usr": False, "def": False},
+    "cleanShellEnv": {"usr": False, "def": False},
+    "extraGlobalShellEnvVars": {"usr": {}, "def": {}},
+    "extraGlobalSubstVars": {"usr": {}, "def": {}}, 
 }
 
+def _getSetting(settingName, argDict={}, defaultGlobalFallback=True, customDefault=None, noGlobals=False):
+    if settingName in activeSettings:
+        gTarget = activeSettings[settingName]
+    else:
+        gTarget = {}
+    if noGlobals:
+        if defaultGlobalFallback:
+            return argDict.get(settingName, gTarget.get('def', customDefault))
+        else:
+            return argDict.get(settingName, customDefault)
+    else:
+        if defaultGlobalFallback:
+            return argDict.get(settingName, gTarget.get('usr', gTarget.get('def', customDefault)))
+        else:
+            return argDict.get(settingName, gTarget.get('usr', customDefault))
+
+def getArgSetting(settingName, argDict, defaultVal=None):
+    return _getSetting(settingName, argDict, defaultGlobalFallback=False, customDefault=defaultVal, noGlobals=True)
+
+def getArgOrGlobalSetting(settingName, argDict, defaultGlobalFallback=True, finalResortVal=None):
+    return _getSetting(settingName, argDict, defaultGlobalFallback=defaultGlobalFallback, customDefault=finalResortVal)
+
+def getGlobalSetting(settingName, defaultGlobalFallback=True, finalResortVal=None):
+    return _getSetting(settingName, defaultGlobalFallback=defaultGlobalFallback, customDefault=finalResortVal)
 
 def consoleWarn(warnMsg):
     print("{} Warning: {}".format(plugin_canon_name, warnMsg))
@@ -154,7 +178,7 @@ def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
     global activeSettings
     for k,v in projectFileShellRunnerSectionDict.items():
         if k in activeSettings:
-            activeSettings[k] = v
+            activeSettings[k]['usr'] = v
         else:
             consoleWarn("Unknown setting [{}] in {} (Ignored)".format(k, projectFileName))
 
@@ -170,7 +194,7 @@ def plugin_loaded():
         srSettsAsDict = srSettings.to_dict()
         for key, value in srSettsAsDict.items():
             if key in activeSettings:
-                activeSettings[key] = value
+                activeSettings[key]['usr'] = value
             else:
                 consoleWarn("Unknown setting [{}] (Ignored)".format(key))
         # B: Load any overrides in the 'ShellRunner' section of the active 'sublime-project' file (if present)
@@ -239,12 +263,12 @@ class EditShellrunnerSettingsCommand(sublime_plugin.WindowCommand):
 
 class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
     def is_visible(self):
-        return activeSettings.get("showSidebarEditMenu", False)
+        return getGlobalSetting("showSidebarEditMenu", finalResortVal=False)
 
 
 class ContextEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
     def is_visible(self):
-        return activeSettings.get("showContextEditMenu", False)
+        return getGlobalSetting("showContextEditMenu", finalResortVal=False)
 
 class runSafeSubprocess():
     def __init__(self, cmdTokens: list, **processArgs):
@@ -270,9 +294,9 @@ class OpenTerminalHereCommand(sublime_plugin.WindowCommand):
 
     def is_visible(self, **kwargs) -> bool:
         if self.sideBarMode:  # sidebar mode
-            return activeSettings.get("showSidebarTerminalCmd", False)
+            return getGlobalSetting("showSidebarTerminalCmd", finalResortVal=False)
         else:  # window mode (via keybind or context menu)
-            return activeSettings.get("showContextTerminalCmd", False)
+            return getGlobalSetting("showContextTerminalCmd", finalResortVal=False)
 
     def is_enabled(self, **kwargs) -> bool:
         # Always return True for this as allows keybind to work even if menu 'is_visible' is disabled
@@ -280,7 +304,7 @@ class OpenTerminalHereCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
         self.cmdArgs = kwargs
-        self.termCmd = activeSettings.get("openTerminalCmd", None)
+        self.termCmd = getGlobalSetting("openTerminalCmd", None)
         if self.termCmd is not None:
             if self.termCmd == "":
                 # "openTerminalCmd" is set to an empty string so we can search for a likely term emulator
@@ -317,16 +341,15 @@ class OpenTerminalHereCommand(sublime_plugin.WindowCommand):
             else:
                 change_dir = self.window.extract_variables().get('file_path', '.')
         cmd_array = splitCommand(self.termCmd)
-        if cmd_array.OK:
+        if not cmd_array.OK:
+            showShRunnerError("There is a problem with your \"openTerminalCmd\""
+                              ". Please check your ShellRunner settings.\n\n{}".format(cmd_array.errorStr))
+        else:
             terminalRun = runSafeSubprocess(cmd_array.tokens, cwd=change_dir)
-            # subprocess.run(cmd_array.tokens, cwd=change_dir)
             if not terminalRun.OK:
                 showShRunnerError("Error running the \"openTerminalCmd\" command, "
                                   "please check/adjust your ShellRunner settings.\n\n"
                                   "Offending command:: {}\n\n{}".format(self.termCmd, terminalRun.failStr))
-        else:
-            showShRunnerError("There is a problem with your \"openTerminalCmd\""
-                              ". Please check your ShellRunner settings.\n\n{}".format(cmd_array.errorStr))
 
 class WindowOpenTerminalHereCommand(OpenTerminalHereCommand):
     def __init__(self, window):
@@ -708,7 +731,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
 
     def sanitiseSpawnCmdArgs(self):
         # :Step A1: Check and build the run command
-        runcmd = deListCmd(retrieveSetting("shellCommand", self.cmdArgs))
+        runcmd = deListCmd(getArgSetting("shellCommand", self.cmdArgs))
         if not runcmd or not isinstance(runcmd, str):
             self.reportArgError("Zero length or incorrectly defined \"shellCommand\"::\n\n{}".format(runcmd))
             return False
@@ -722,7 +745,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
             self.DEBUG and self.db.log("Compiling substitution dictionary (to replace any placeholders in our base command)")
             replacementVars = self.window.extract_variables()
             # B: Use shell env vars in substitution string if cleanShellEnv is not set
-            self.cmdArgs["cleanShellEnv"] = retrieveSetting("cleanShellEnv", self.cmdArgs, activeSettings, default=False)
+            self.cmdArgs["cleanShellEnv"] = getArgOrGlobalSetting("cleanShellEnv", self.cmdArgs, finalResortVal=False)
             if not self.cmdArgs["cleanShellEnv"]:
                 self.DEBUG and self.db.log("Including shell env vars as substitution vars (\"cleanShellEnv\" is not set)")
                 replacementVars.update(os.environ.copy())
@@ -734,20 +757,20 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
             if self.sideBarMode:
                 replacementVars.update(buildPathFileDirSidebarItemStrings(self.cmdArgs))
             # D: get any extra, user defined "global" substitution variables
-            substVars = retrieveSetting("extraGlobalSubstVars", activeSettings, default={})
+            substVars = getGlobalSetting("extraGlobalSubstVars", finalResortVal={})
             # E: get any extra, user defined "local" command-arg substitution variables
-            substVars.update(retrieveSetting("extraCmdSubstVars", self.cmdArgs, default={}))
+            substVars.update(getArgSetting("extraCmdSubstVars", self.cmdArgs, defaultVal={}))
             replacementVars.update(substVars)
             # F: build a dictionary of new env vars from global and cmd args settings
             # `- we use it here for substitution vars, later it will update the shell environment
-            self.cmdArgs["exportEnv"] = retrieveSetting("extraGlobalShellEnvVars", activeSettings, default={})
-            self.cmdArgs["exportEnv"].update(retrieveSetting("extraCmdShellEnvVars", self.cmdArgs, default={}))
+            self.cmdArgs["exportEnv"] = getGlobalSetting("extraGlobalShellEnvVars", finalResortVal={})
+            self.cmdArgs["exportEnv"].update(getArgSetting("extraCmdShellEnvVars", self.cmdArgs, defaultVal={}))
             replacementVars.update(self.cmdArgs["exportEnv"])
             # F: add one (or all) selected region(s), (and separated by 'multiSelSeparator') - ${selText}
             sel = self.window.active_view().sel()
             replacementVars["selText"] = ""
-            selSeparator = retrieveSetting("multiSelSeparator", self.cmdArgs, activeSettings, default=" ")
-            selLiteral = retrieveSetting("selAsLiteralStr", self.cmdArgs, activeSettings, default=False)
+            selSeparator = getArgOrGlobalSetting("multiSelSeparator", self.cmdArgs, finalResortVal=" ")
+            selLiteral = getArgOrGlobalSetting("selAsLiteralStr", self.cmdArgs, finalResortVal=False)
             buildAll = []
             for s in sel:
                 foundStr = self.window.active_view().substr(s)
@@ -783,7 +806,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
         
         # :Step A2: Check 'initChangeDir' setting to see if we should change dir, to file loc, before running command
         # Note: We read this as 'boolean' but change it to a path (str) of the directory into which we'll cd
-        doChgDir = retrieveSetting("initChangeDir", self.cmdArgs, activeSettings, default=True)
+        doChgDir = getArgOrGlobalSetting("initChangeDir", self.cmdArgs, finalResortVal=True)
         if not isinstance(doChgDir, bool):
             self.reportArgError("\"initChangeDir\" must be defined [true or false (type=bool)].\n\n"
                                 "The current setting [{} (type={})] is invalid.".format(doChgDir, type(doChgDir)))
@@ -804,7 +827,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
 
         # now check additional args that are relevant to the text manipulation commands
         # :Step B1: Check 'outputTo' is defined correctly:
-        output_dest_list = retrieveSetting("outputTo", self.cmdArgs, activeSettings, default=[])
+        output_dest_list = getArgOrGlobalSetting("outputTo", self.cmdArgs, finalResortVal=[])
         # be careful with the null setting in json, which is read as None into python
         if isinstance(output_dest_list, str) or output_dest_list is None:
             output_dest_list = [output_dest_list]
@@ -820,11 +843,11 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
         self.DEBUG and self.db.log("\"outputTo\" (as list)  = {}".format(self.cmdArgs["outputTo"]))
 
         # :Step B2: Prepare 'newTabName' from settings (if this is None, that's OK, we just have a nameless new tab)
-        self.cmdArgs["newTabName"] = retrieveSetting("outputTabName", self.cmdArgs, activeSettings)
+        self.cmdArgs["newTabName"] = getArgOrGlobalSetting("outputTabName", self.cmdArgs)
         self.DEBUG and self.db.log("\"newTabName\"  = {}".format(self.cmdArgs["newTabName"]))
 
         # :Step B3: Check 'cmdCombineOutputStreams' setting to see if we should merge stdout and stderr from command
-        self.cmdArgs["cmdCombineOutputStreams"] = retrieveSetting("cmdCombineOutputStreams", self.cmdArgs, activeSettings, default=False)
+        self.cmdArgs["cmdCombineOutputStreams"] = getArgOrGlobalSetting("cmdCombineOutputStreams", self.cmdArgs, finalResortVal=False)
         if not isinstance(self.cmdArgs["cmdCombineOutputStreams"], bool):
             self.reportArgError("\"cmdCombineOutputStreams\" must be defined [true or false (type=bool)].\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["cmdCombineOutputStreams"], type(self.cmdArgs["cmdCombineOutputStreams"])))
@@ -832,7 +855,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
         self.DEBUG and self.db.log("\"cmdCombineOutputStreams\"  = {}".format(self.cmdArgs["cmdCombineOutputStreams"]))
 
         # :Step B4: Check 'textCmdTimeout' setting to see if we should set a timeout for our command    
-        self.cmdArgs["textCmdTimeout"] = retrieveSetting("textCmdTimeout", self.cmdArgs, activeSettings, default=10)
+        self.cmdArgs["textCmdTimeout"] = getArgOrGlobalSetting("textCmdTimeout", self.cmdArgs, finalResortVal=10)
         if not isinstance(self.cmdArgs["textCmdTimeout"], int):
             self.reportArgError("\"textCmdTimeout\" should contain the number of seconds, as an integer, after which to timeout the command.\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["textCmdTimeout"], type(self.cmdArgs["textCmdTimeout"])))
@@ -842,7 +865,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
         self.DEBUG and self.db.log("\"textCmdTimeout\"  = {}".format(self.cmdArgs["textCmdTimeout"]))
 
         # :Step B5: Check 'textCmdStopOnErr' setting to see if we should stop on shell errors    
-        self.cmdArgs["textCmdStopOnErr"] = retrieveSetting("textCmdStopOnErr", self.cmdArgs, activeSettings, default=True)
+        self.cmdArgs["textCmdStopOnErr"] = getArgOrGlobalSetting("textCmdStopOnErr", self.cmdArgs, finalResortVal=True)
         if not isinstance(self.cmdArgs["textCmdStopOnErr"], bool):
             self.reportArgError("\"textCmdStopOnErr\" must be defined [true or false (type=bool)].\n\n"
                     "The current setting [{} (type={})] is invalid.".format(self.cmdArgs["textCmdStopOnErr"], type(self.cmdArgs["textCmdStopOnErr"])))

@@ -13,7 +13,7 @@
     {
 		"caption":	"spawn: open .py file in nano",
 		"command":	"sidebar_shellrunner_spawn_command",
-		"args":	{	"shellCommand": "gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
+		"args":	{	"shellCommand": "/usr/bin/gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
 				 	"targetExtensions": [".py"], 
 				 	"files": [],
 				}
@@ -21,7 +21,7 @@
 	{
 		"caption":	"spawn: open pic file in geeqie",
 		"command":	"sidebar_shellrunner_spawn_command",
-		"args":	{	"shellCommand": "geeqie '${lastFile}'",
+		"args":	{	"shellCommand": "/usr/bin/geeqie '${lastFile}'",
 				 	"targetExtensions": [".jpg", ".png", ".jpeg"],
 				 	"files": [],
 				}
@@ -35,10 +35,16 @@
 	{
 		"caption":	"txt: insert stdout in current doc",
 		"command":	"sidebar_shellrunner_text_command",
-		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner insert text demo; ",
-										"echo we can continue our text over multiple lines ",
-										"if we contain each line in quotes and bracket ",
-										"the whole lot as a list.'"],
+		"args":	{	// Note: For visual convenience, you can write your shellCommand as a list of strings,
+					//    `- and place each string on a new line. ShellRunner will simply join the lines
+					//     - together to make the whole command.
+					"shellCommand": ["/usr/bin/bash -c 'printf \"\n\n\"; printf '=%.0s' {1..76}; ",
+										"printf \"\nShellRunner can insert command output into the active document.\n\"; ",
+										"echo This is what is happening here because \\\"outputTo\\\" is set to \\\"cursorInsert\\\".; ",
+										"echo You can also set \\\"outputTo\\\" to \\\"newTab\\\", \\\"msgBox\\\", \\\"clip\\\", or \\\"sublConsole\\\".; ",
+										"echo You can probably guess where the text goes for each of these settings.; ",
+										"echo \"(ctrl-Z will work to undo this demo text insertion)\"; ",
+										"printf \"=%.0s\" {1..76}; printf \"\n\n\"'"],
 				 	"outputTo": "cursorInsert",
 				 	"initChangeDir": false,
 				}
@@ -48,9 +54,9 @@
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell ",
 									"exit.; echo But with textCmdStopOnErr false, ",
-									"we do not fail.; exit 77;'"],
+									"we do not fail.; printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}; exit 77;'"],
 				 	"outputTo": "newTab",
-				 	"outputTabName": "ShellRunner_ignore_err",
+				 	"outputTabName": "ShellRunner Demo",
 				 	"textCmdStopOnErr": false,
 				}
 	},
@@ -58,10 +64,11 @@
 		"caption":	"txt: send stdout AND stderr to new tab",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:;",
-									" echo [this is stdout text] ; echo [this is stderr text] 1>&2'"],
+									" echo [this is stdout text] ; echo [this is stderr text] 1>&2 ; ",
+									"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}'"],
 				 	"cmdCombineOutputStreams": true,
 				 	"outputTo": "newTab",
-				 	"outputTabName": "stdout-stderr-demo",
+				 	"outputTabName": "ShellRunner Demo",
 				}
 	},
 	{
@@ -69,12 +76,13 @@
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": "/usr/bin/bash -c 'sleep 15; echo never_never'",
 				 	"outputTo": [ "clip", "newTab"],
+				 	"outputTabName": "ShellRunner Demo",
 				 	"consoleDebug": true,
 					"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
 				}
 	},
 	{
-		"caption":	"txt: command for dirs only",
+		"caption":	"txt: ls command for dirs only",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Directory Listing for ${lastDir}: ; ls ${lastDir}'",
 					"outputTo": [ "sublConsole", "msgBox" ],
@@ -87,7 +95,7 @@
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
 					"outputTo": "newTab",
-				 	// "outputTabName": "ShellRunner Output",
+				 	"outputTabName": "ShellRunner Demo",
 					"files": [],
 				}
 	},
@@ -95,15 +103,15 @@
 		"caption":	"txt: using substitution variables",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo \"\\${INTO_ENV} ",
-									"${featureA} AND ${featureB}\"; echo \"Working Dir (PWD): ${PWD}\"; ",
-									"cd \/; echo \"cd \/\"; echo \"Working Dir (PWD): ${PWD}\"; ",
-									"echo \"The above PWD outputs are the same as they were expanded / substituted at command build time\"; ",
-									"echo \"Working Dir (as expanded by shell) (PWD): \\${PWD}\";",
-									"'"
-								    ],
+									"${featureA} OR ${featureB}\"; printf -- \"%s\n\n\" \"For example:\"; echo \"Working Dir (PWD) = ${PWD}\"; ",
+									"cd \/; echo \"cd \/ (change to the root dir for demo purposes)\"; echo \"Working Dir (PWD) = ${PWD} (incorrect: should show root dir)\"; ",
+									"echo \"The above PWD outputs are the same as they were both replaced at command build time, i.e. pre-shell\"; ",
+									"echo \"Working Dir (as expanded by shell) (PWD) = \\${PWD} (this now correctly shows the root dir)\";",
+									"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand};'"],
 					"outputTo": "msgBox",
+					// "tabDebugReport": true,
 					"extraCmdSubstVars": 	{ 	"featureA"		:	"use shell environment vars at command build time",
-												"featureB"		:	"leave expansion of environment vars to the shell at run time"
+												"featureB"		:	"(when they're escaped), leave expansion of environment vars to the shell at run time"
 											},
 					"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"ShellRunner can"
 											},
@@ -112,14 +120,16 @@
 		"caption":	"txt: using shell env variables",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo ${INTO_ENV};",
-									"echo HOME dir = [\\${HOME}]; ",
-									"echo Current dir is: \\${PWD} - now cd to home dir; cd \\${HOME};",
-								    "echo After \"cd\" the current dir is: \\${PWD}; ",
-									"echo Note: Leave var expansion to the shell with double backslash;",
-									"echo Contra to above INTO_ENV, this is shell expanded: \\${INTO_ENV};'"],
+									"echo \"HOME dir = [\\${HOME}] (empty as presently we have exported no env vars to our new shell).\"; echo ShellRunner can also create new shell env vars.; ",
+									"echo In this demo we have created MOMENTOUS = DIOGENES;",
+									"echo Here [${MOMENTOUS}] is pre-shell expanded; ",
+									"echo Here [\\${MOMENTOUS}] is in-shell expanded; ",
+									"echo Note: Leave var expansion to the shell with double backslash; echo;",
+									"echo Currently, as we have cleared the ENV, we only have a few env vars. Here they are::; env'"],
 					"outputTo": "msgBox",
 					"cleanShellEnv": true,
-					"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"With the shell env cleared we have no HOME dir."
+					"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"With the shell env cleared we have no HOME dir.",
+												"MOMENTOUS"	:	"DIOGENES"
 											},
 				}
 	},	{
@@ -127,17 +137,22 @@
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	
 					// This example shows how to use single and double quotes in Env and substitution vars
-					"shellCommand": [ "/usr/bin/bash -c 'echo \"Subst VarA: ${Sstra}\"; ",
+					"shellCommand": [ "/usr/bin/bash -c 'printf \"%s\n\" ${CharX}; ",
+					                  "echo \"Using complex characters, especially quotation marks, is tricky to do directly.\"; ",
+					                  "echo \"Subst VarA: ${Sstra}\"; ",
 					                  "echo \"Subst VarB: ${Sstrb}\"; ",
-					                  "printf \"Env VarA (as subst): ${Estra}\n\"; ",
-					                  "printf \"Env VarB (as subst): ${Estrb}\n\"; ",
-					                  "echo \"Env VarA (shell expanded): \\${Estra}\"; ",
-					                  "echo \"Env VarB (shell expanded): \\${Estrb}\"; ",
+					                  "echo \"ShellRunner can also set shell ENV vars.\"; ",
+					                  "echo \"These ENV vars can be used at command build time (pre-shell) or run time (in-shell).\"; ",
+					                  "printf \"Env VarA (pre-shell): ${Estra}\n\"; ",
+					                  "printf \"Env VarB (pre-shell): ${Estrb}\n\"; ",
+					                  "echo \"Env VarA (in-shell): \\${Estra}\"; ",
+					                  "echo \"Env VarB (in-shell): \\${Estrb}\"; ",
 					                  "'",
 					                ],
 					"outputTo": ["msgBox", "clip"],
 					"extraCmdSubstVars":	{ 	"Sstra"	:	"This line's got single quotes. It's working fine.",
 												"Sstrb" :   "This line has \\\"double\\\" quotes. They work \\\"fine\\\" too.",
+												"CharX" :   "$'It\\'s possible to use most/all complex characters via a substituted literal-string variable like this one e.g. {[(/\\@~#;:,.?><!\"£$`|%^&*\\')]}'",
 											},
 					"extraCmdShellEnvVars":	{ 	"Estra"	:	"BEST_USE_RESTRICTED_CHARSET_FOR_ENV_VARS",
 												"Estrb"	:	"It's unclear how the mind's eye works."
@@ -150,8 +165,8 @@
 					// some special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
 					// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
 					//  - by setting "selAsLiteralStr" to true - as follows
-					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\" ",
-									"\"Select some awkward text and run again.\n\" ",
+					"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\n\n%s\" ",
+									"\"ShellRunner selected text demo. Please select one or more sections of text, as complex as you like,  and run again.\n\" ${shellCommand}",
 									"|| printf -- \"%s\" ${selText};",
 									"'"],
 					"outputTo": ["msgBox", "clip"],
@@ -208,7 +223,7 @@
 		"caption":	"txt: sidebar [files] substitution",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": ["printf -- 'From \"files: []\" arg in sidebar command",
-			                         " we get two substitution vars:\n",
+			                         " we get two substitution vars (as strings):\n",
 			                         "\\${files}: ${files}\n",
 			                         "\\${lastFile}: ${lastFile}\n",
 			                         "(strings are empty if data is unavailable)'",
@@ -221,7 +236,7 @@
 		"caption":	"txt: sidebar [dirs] substitution",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": ["printf -- 'From \"dirs: []\" arg in sidebar command",
-			                         " we get two substitution vars:\n",
+			                         " we get two substitution vars (as strings):\n",
 			                         "\\${dirs}: ${dirs}\n",
 			                         "\\${lastDir}: ${lastDir}\n",
 			                         "(strings are empty if data is unavailable)'",
@@ -234,7 +249,7 @@
 		"caption":	"txt: sidebar [paths] substitution",
 		"command":	"sidebar_shellrunner_text_command",
 		"args":	{	"shellCommand": ["printf -- 'From \"paths: []\" arg in sidebar command",
-			                         " we get two substitution vars:\n",
+			                         " we get two substitution vars (as strings):\n",
 			                         "\\${paths}: ${paths}\n",
 			                         "\\${lastPath}: ${lastPath}\n",
 			                         "(strings are empty if data is unavailable)'",

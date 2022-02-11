@@ -119,7 +119,7 @@ Some contrived examples of ShellRunner commands that might appear in your .subli
 #### Examples of key bindings 
 
 	{
-		"keys":	["ctrl+alt+s+a"],
+		"keys":	["ctrl+alt+1"],
 		"command":	"window_shellrunner_text_command",
 		"args":	{	
 					// This example shows how to use single and double quotes in Env and substitution vars
@@ -140,7 +140,7 @@ Some contrived examples of ShellRunner commands that might appear in your .subli
 											},
 				}
 	},	{
-		"keys":	["ctrl+alt+s+b"],
+		"keys":	["ctrl+alt+2"],
 		"command":	"window_shellrunner_text_command",
 		"args":	{	
 					// some special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
@@ -183,6 +183,10 @@ If set to true then translate ${selText} strings into literal shell strings e.g.
 ###### "consoleDebug": true/false
 
 If true, print debug information to the Sublime Text console for a command throughout its enablement / argument checking / and run phases. This can be useful in getting tricky shell commands to work correctly. This argument is settable only in a command's set of arguments. If unset it defaults to false i.e. no debug information is printed.
+
+###### "tabDebugReport": true/false
+
+If true, output a final report of *shellCommand* debug information to a new tab. This provides more information than the *consoleDebug* setting (above), and is visually easier to digest. If unset it defaults to false i.e. no debug report is generated.
 
 ###### "extraCmdSubstVars": {"name": "value"}
 
@@ -289,6 +293,10 @@ ${project_base_name}<br>
 ##### ${selText}
 
 A string corresponding to the selected text in the active document. If multiple regions are selected the corresponding selections will be concatenated with "**multiSelSeparator**" as the separating string. "**multiSelSeparator**" defaults to a single space if not set.
+
+##### ${shellCommand}
+
+A copy of the *shellCommand*, as a string, before any substitution variables have been replaced. This string is presented to the shell in a $'literal-string' format.
 
 ##### User Defined Substitution Variables
 

@@ -7,7 +7,8 @@ import shlex
 import shutil
 import time
 import trace
-import pprint 
+import pprint
+import json
 pp = pprint.PrettyPrinter(indent=4)
 from threading import Thread
 from collections import namedtuple
@@ -166,6 +167,9 @@ class FactoryResetCommand(sublime_plugin.WindowCommand):
         if not ans:
             return
         setupConfigFileFramework(factoryReset=True)
+        # reset our activeSettings back to the defaults
+        for key, value in activeSettings.items():
+            activeSettings[key]['usr'] = activeSettings[key]['def']
 
 def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
     """
@@ -319,14 +323,14 @@ class OpenTerminalHereCommand(sublime_plugin.WindowCommand):
                     showShRunnerError("Cannot locate a terminal emulator program on your system.\n\n"
                                         "The \"openTerminalCmd\" is set to an empty string in your ShellRunner "
                                         "settings. This causes ShellRunner to search for a suitable terminal "
-                                        "emulator, which has just been done without satisfaction.\n\n"
+                                        "emulator, which has just been done without success.\n\n"
                                         "Please consider setting \"openTerminalCmd\" to a valid terminal emulator "
                                         "command string.")
                     return
 
         else:
             showShRunnerError("WARNING: Cannot open a terminal without \"openTerminalCmd\" being defined.\n\n"
-                                "Check and change your ShellRunner settings.")
+                                "Please update your ShellRunner settings.")
             return
 
         if not self.sideBarMode:  # window / context mode
@@ -397,7 +401,7 @@ def underlined(bareStr: str) -> str:
 
 class DebugLogger():
     def __init__(self, commandStr, initPrefix="", consoleMode=True, tabReport=False):
-        self.fullCommandStr = commandStr
+        self.fullCommandStr = json.dumps(commandStr)
         self.cs = truncateStr(commandStr)
         self.prefix = initPrefix
         self.consoleMode = consoleMode
@@ -441,10 +445,10 @@ def amIEnabled(visArgs, windowVars={}, sbMode=True):
         enablementRep += addStr
     visMe = True
     DEBUG = visArgs.get('consoleDebug', False)
-    DEBUG and buildRep('*************************************\n')
+    DEBUG and buildRep('{}\n'.format('*' * 37))
     DEBUG and buildRep("ShellRunner Command Enablement Check:\n"
-                       "=====================================\n" 
-                       "- Target Command: {}\n".format(truncateStr(deListCmd(visArgs.get('shellCommand', "NO COMMAND!")))))
+                       "{}\n" 
+                       "- Target Command: {}\n".format('=' * 37, truncateStr(deListCmd(visArgs.get('shellCommand', "NO COMMAND!")))))
     targetExtns = visArgs.get('targetExtensions', False)
     if sbMode:
         DEBUG and buildRep("- Sidebar Menu Mode Check\n")
@@ -507,9 +511,9 @@ def amIEnabled(visArgs, windowVars={}, sbMode=True):
     else:
         DEBUG and buildRep("No file extension {}restrictions found in args".format(extraForDirs))
     DEBUG and buildRep('Command Visible/Enabled = {}\n'.format(visMe))
-    DEBUG and buildRep('[Note: Sublime Text runs enablement checks twice under some circumstances,]\n')
-    DEBUG and buildRep('[so do not worry if you see this message printed two times]\n')
-    DEBUG and buildRep('*************************************\n')
+    # DEBUG and buildRep('[Note: Sublime Text runs enablement checks twice under some circumstances,]\n')
+    # DEBUG and buildRep('[so do not worry if you see this message printed two times]\n')
+    DEBUG and buildRep('{}\n'.format('*' * 37))
     DEBUG and print("{}".format(enablementRep))
     return visMe
 
@@ -584,23 +588,9 @@ class runShellCommand(Thread):
         runObj = runSafeSubprocess(self.cmdArgs["shellCommand"], **processArgs)
         if not runObj.OK:
             self.errStr = ("Shell command failed. No text processed.\n\n"
-                              "Offending command:: {}\n\n"
-                              "Failure Details:: {}\n\n{}".format(self.termCmd, runObj.failStr))
+                              "Offending command::\n{}\n\n"
+                              "Failure Details::\n{}".format(' '.join(self.cmdArgs["shellCommand"]), runObj.failStr))
             return
-            # cmdRes = subprocess.run(self.cmdArgs["shellCommand"], **processArgs)
-        # except subprocess.TimeoutExpired:
-            # self.errStr = ("No text processed due to shell command timeout after {} seconds.\n\n"
-                            # "The timeout can be set in the range 1-600 seconds.\n\n"
-                              # "Offending command:: {}".format(self.cmdArgs["textCmdTimeout"],
-                                                             # self.cmdArgs["origCmd50CharLabel"]))
-            # self.DEBUG and self.db.log("Error running shell command: {}".format(self.errStr)) 
-            # return
-        # except Exception as err:
-            # self.errStr = ("Shell command failed as an unexpected exception occurred.\n\n"
-                              # "Offending command:: {}\n\n"
-                              # "Details:: {}\n\n{}".format(self.cmdArgs["origCmd50CharLabel"], err.__class__.__name__, err))
-            # self.DEBUG and self.db.log("Error running shell command: {}".format(self.errStr)) 
-            # return
 
         self.DEBUG and self.db.log("Cmd completed with exit code: {}".format(runObj.cmdResult.returncode))
         if self.isTextCommand:
@@ -707,6 +697,14 @@ class ThreadProgress():
 
         sublime.set_timeout(lambda: self.run(i), 100)
 
+def makeLiteralStr(normStr: str) -> str:
+    # first replace single backslash with double
+    # `- note that the single backslash is represented as an escaped backslash
+    #  - and a backslash is used to represent the escape
+    morphingStr = normStr.replace("\\", "\\\\") 
+    # a shell $'literal string' is thus enclosed, and it is necessary
+    # `- only to 'escape' contained single quotes
+    return "$'" + morphingStr.replace("'", "\\'") + "'" 
 
 class ShellRunnerCommand(sublime_plugin.WindowCommand):
 
@@ -731,6 +729,7 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
 
     def sanitiseSpawnCmdArgs(self):
         # :Step A1: Check and build the run command
+        origRuncmd = getArgSetting("shellCommand", self.cmdArgs)
         runcmd = deListCmd(getArgSetting("shellCommand", self.cmdArgs))
         if not runcmd or not isinstance(runcmd, str):
             self.reportArgError("Zero length or incorrectly defined \"shellCommand\"::\n\n{}".format(runcmd))
@@ -779,10 +778,11 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
             if buildAll:
                 replacementVars["selText"] = selSeparator.join(buildAll)
             if selLiteral:
-                replacementVars["selText"] = replacementVars["selText"].replace("\\", "\\\\")
-                replacementVars["selText"] = "$'" + replacementVars["selText"].replace("'", "\\'") + "'"
-            
+                replacementVars["selText"] = makeLiteralStr(replacementVars["selText"])
+            # G: add the shellCommand itself as a replacement var
+            replacementVars["shellCommand"] = makeLiteralStr(json.dumps(runcmd))           
             self.DEBUG and self.db.log("Substitution dictionary compiled as::\n{}\n".format(pp.pformat(replacementVars)))
+            # End of compilation of 'replacementVars'
 
             # split command into shell tokens (for subprocess) BEFORE performing var substitution on individual tokens
             self.DEBUG and self.db.log("Splitting full shell command into 'tokens' for running purposes")
@@ -801,7 +801,6 @@ class ShellRunnerCommand(sublime_plugin.WindowCommand):
             self.DEBUG and self.db.log("Post-substitution \"shellCommand\" tokens:\n{}\n".format(pp.pformat(self.cmdArgs["shellCommand"])))
 
         self.origCmd200CharStr = truncateStr(runcmd, outputLength=200)
-        # self.cmdArgs["origCmd200CharLabel"] = truncateStr(runcmd, outputLength=200)
         self.cmdArgs["origCmd50CharLabel"] = truncateStr(runcmd, outputLength=50)
         
         # :Step A2: Check 'initChangeDir' setting to see if we should change dir, to file loc, before running command

@@ -240,7 +240,8 @@ def plugin_loaded():
     srSettings.clear_on_change('callBackKey')
     srSettings.add_on_change('callBackKey', readInUserSettings)
 
-
+print('ShellRunner running ext code > plugin_loaded')
+plugin_loaded()
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):

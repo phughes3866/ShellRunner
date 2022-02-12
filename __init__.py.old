@@ -1,0 +1,3 @@
+from .ShellRunner import plugin_loaded as getThisShowOnTheRoad
+print('SHELLRUNNER running the __init__.py')
+getThisShowOnTheRoad()

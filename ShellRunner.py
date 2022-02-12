@@ -22,6 +22,28 @@ templateSubDir = "configTemplates"
 outputToValues = ['newTab', 'sublConsole', 'cursorInsert', 'msgBox', 'clip', None]
 outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
+curPlatform = sublime.platform()
+if curPlatform == "osx":
+    curPlatform = "OSX"
+else:
+    curPlatform = curPlatform.capitalize()
+# We now have enough info to configure our global 'configFiles' dictionary
+configFiles['settings'] = configFileGroup("ShellRunner.sublime-settings",
+                                       "ShellRunner.settings-template",
+                                       # "{}/{}.settings-template".format(templateDir, plugin_canon_name),
+                                       "ShellRunnerExample.sublime-settings")
+configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
+                                             "ShellRunnerSideBar.menu-template",
+                                             # "{}/Side Bar.menu-template".format(templateDir),
+                                             "ShellRunnerExampleSideBar.sublime-menu")
+configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
+                                             "ShellRunnerContext.menu-template",
+                                             "ShellRunnerExampleContext.sublime-menu")
+configFiles['keyMap'] = configFileGroup("Default ({}).sublime-keymap".format(curPlatform),
+                                        "ShellRunner.keymap-template",
+                                        "ShellRunnerExample.sublime-keymap")
+
+
 def showShRunnerError(errormsg):
     sublime.message_dialog("{} Command Report::\n\n{}".format(plugin_canon_name, errormsg))
 
@@ -41,12 +63,6 @@ class splitCommand():
                               "Split attempted on:: {}\n\n"
                               "Details:: {}\n\n{}").format(self.cmdStr, err.__class__.__name__, err)
 
-
-# def retrieveSetting(settingName, primaryDict, secondaryDict={}, default=None):
-#     if secondaryDict:
-#         return primaryDict.get(settingName, secondaryDict.get(settingName, default))
-#     else:
-#         return primaryDict.get(settingName, default)
 
 
 # define our global main settings with default values
@@ -122,26 +138,8 @@ def setupConfigFileFramework(factoryReset=False):
     global configFiles
     # determine the running platform (Linux, Windows or OSX)
     # `- so we can correctly name our 'Default (${platform}).sublime-keymap' file
-    curPlatform = sublime.platform()
-    if curPlatform == "osx":
-        curPlatform = "OSX"
-    else:
-        curPlatform = curPlatform.capitalize()
-    # We now have enough info to configure our global 'configFiles' dictionary
-    configFiles['settings'] = configFileGroup("ShellRunner.sublime-settings",
-                                           "ShellRunner.settings-template",
-                                           # "{}/{}.settings-template".format(templateDir, plugin_canon_name),
-                                           "ShellRunnerExample.sublime-settings")
-    configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
-                                                 "ShellRunnerSideBar.menu-template",
-                                                 # "{}/Side Bar.menu-template".format(templateDir),
-                                                 "ShellRunnerExampleSideBar.sublime-menu")
-    configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
-                                                 "ShellRunnerContext.menu-template",
-                                                 "ShellRunnerExampleContext.sublime-menu")
-    configFiles['keyMap'] = configFileGroup("Default ({}).sublime-keymap".format(curPlatform),
-                                            "ShellRunner.keymap-template",
-                                            "ShellRunnerExample.sublime-keymap")
+
+
     # Set up 4x config files:
     # `- copy 'template' version to 'user' version
     #    unless 'user' version exists or factoryReset=True

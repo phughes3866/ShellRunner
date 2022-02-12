@@ -17,6 +17,8 @@ configFiles = {}
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
 plugin_canon_name = 'ShellRunner'
+exampleSubDir = "configExamples"
+templateSubDir = "configTemplates"
 outputToValues = ['newTab', 'sublConsole', 'cursorInsert', 'msgBox', 'clip', None]
 outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
@@ -125,21 +127,21 @@ def setupConfigFileFramework(factoryReset=False):
         curPlatform = "OSX"
     else:
         curPlatform = curPlatform.capitalize()
-    exampleDir = "configExamples"
-    templateDir = "configTemplates"
     # We now have enough info to configure our global 'configFiles' dictionary
-    configFiles['settings'] = configFileGroup("{}.sublime-settings".format(plugin_canon_name),
-                                           "{}/{}.settings-template".format(templateDir, plugin_canon_name),
-                                           "{}/Example.sublime-settings".format(exampleDir))
+    configFiles['settings'] = configFileGroup("ShellRunner.sublime-settings",
+                                           "ShellRunner.settings-template",
+                                           # "{}/{}.settings-template".format(templateDir, plugin_canon_name),
+                                           "ShellRunnerExample.sublime-settings")
     configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
-                                                 "{}/Side Bar.menu-template".format(templateDir),
-                                                 "{}/ExampleSideBar.sublime-menu".format(exampleDir))
+                                                 "ShellRunnerSideBar.menu-template",
+                                                 # "{}/Side Bar.menu-template".format(templateDir),
+                                                 "ShellRunnerExampleSideBar.sublime-menu")
     configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
-                                                 "{}/Context.menu-template".format(templateDir),
-                                                 "{}/ExampleContext.sublime-menu".format(exampleDir))
+                                                 "ShellRunnerContext.menu-template",
+                                                 "ShellRunnerExampleContext.sublime-menu")
     configFiles['keyMap'] = configFileGroup("Default ({}).sublime-keymap".format(curPlatform),
-                                            "{}/keymap.template".format(templateDir),
-                                            "{}/Example.sublime-keymap".format(exampleDir))
+                                            "ShellRunner.keymap-template",
+                                            "ShellRunnerExample.sublime-keymap")
     # Set up 4x config files:
     # `- copy 'template' version to 'user' version
     #    unless 'user' version exists or factoryReset=True
@@ -149,10 +151,18 @@ def setupConfigFileFramework(factoryReset=False):
     for key, trisomy in configFiles.items():
         target = plugin_loose_pkg_dir / trisomy.userFile
         if not target.is_file() or factoryReset:
-            template = sublime.load_resource("Packages/{}/{}".format(plugin_canon_name, trisomy.templateFile))
-            with open(str(target), 'w') as f:
-                f.write(template)
-                f.close()
+            foundList = sublime.find_resources(trisomy.templateFile)
+            if foundList:
+                # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
+                template = sublime.load_resource(foundList[0])
+                with open(str(target), 'w') as f:
+                    f.write(template)
+                    f.close()
+            else:
+                showShRunnerError("ERROR: CORE FILE MISSING\n\n"
+                    "It appears your ShellRunner installation has been corrupted. "
+                    "Package removal and reinstallation is recommended.\n\n"
+                    "Missing file: {}".format(trisomy.templateFile))
 
 
 class FactoryResetCommand(sublime_plugin.WindowCommand):
@@ -238,9 +248,10 @@ class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
 
 
 def editConfigFile(thisGrp, thisWindow):
-    targetFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
-    args = {"base_file": "${packages}/" + plugin_canon_name + "/" + thisGrp.exampleFile,
-            "user_file": "{}".format(str(targetFile)),
+    userConfigFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
+    egConfigFileRelPath = pathlib.Path(plugin_canon_name) / exampleSubDir / thisGrp.exampleFile
+    args = {"base_file": "${packages}" + "/" + str(egConfigFileRelPath),
+            "user_file": "{}".format(str(userConfigFile)),
             }
     thisWindow.run_command('edit_settings', args)
 

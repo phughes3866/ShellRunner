@@ -1,0 +1,36 @@
+[
+	{   "id": "shell_runner_sidebar_menu", "caption": "-" },
+	{
+		"caption": "Open Terminal Here",
+		"command": "sidebar_open_terminal_here",
+		"args":	{ "paths": []},
+	},
+	{
+		"caption": "ShellRunner Commands",
+		"command": "sidebar_edit_menu_viewability",
+		"id": "shell_runner_sidebar_commands_parent",
+
+		"children": [
+			{
+				"caption": "Edit Side Bar Menu Shell Commands…",
+				"command": "edit_shellrunner_sidebar_commands",
+			},
+			{"caption": "-", "id": "shell_runner_sidebar_commands_below_here"},
+			// Insert custom side bar menu commands here.
+			// See -> Command Palette: ShellRunner README for shellCommand syntax details
+			// For example:
+    {
+		"caption":	"ShellRunner Sidebar Command Demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Hello ${platform} Sublime Text user.; ",
+										"printf \"Welcome to some ShellRunner plugin functionality.\n\n\";",
+										"printf \"You should now comment out this demo command \";",
+										"printf \"and set about configuring ShellRunner to meet your needs (\";",
+										"printf \"configuration instructions can be found in the ShellRunner README \";",
+										"printf \", which is available via the Sublime Text command palette).\";",
+										"'"],
+				 	"outputTo": "msgBox", 
+				}
+	},
+
+]},]

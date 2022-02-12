@@ -238,9 +238,6 @@ def plugin_loaded():
     srSettings.clear_on_change('callBackKey')
     srSettings.add_on_change('callBackKey', readInUserSettings)
 
-print('ShellRunner running ext code > plugin_loaded')
-plugin_loaded()
-
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):
         global Settings
@@ -250,6 +247,7 @@ class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
 
 
 def editConfigFile(thisGrp, thisWindow):
+    plugin_loaded()
     userConfigFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
     egConfigFileRelPath = pathlib.Path(plugin_canon_name) / exampleSubDir / thisGrp.exampleFile
     args = {"base_file": "${packages}" + "/" + str(egConfigFileRelPath),

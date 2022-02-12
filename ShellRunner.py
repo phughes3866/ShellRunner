@@ -147,7 +147,7 @@ def setupConfigFileFramework(factoryReset=False):
     #    unless 'user' version exists or factoryReset=True
     plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name
     if not plugin_loose_pkg_dir.is_dir():
-        plugin_loose_pkg_dir.mkdir(parents=True, exist_ok=True)
+        plugin_loose_pkg_dir.mkdir()
     for key, trisomy in configFiles.items():
         target = plugin_loose_pkg_dir / trisomy.userFile
         if not target.is_file() or factoryReset:
@@ -155,6 +155,7 @@ def setupConfigFileFramework(factoryReset=False):
             if foundList:
                 # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
                 template = sublime.load_resource(foundList[0])
+                print("set up config: {}\nWith template: {}".format(str(target), foundList[0]))
                 with open(str(target), 'w') as f:
                     f.write(template)
                     f.close()
@@ -163,6 +164,8 @@ def setupConfigFileFramework(factoryReset=False):
                     "It appears your ShellRunner installation has been corrupted. "
                     "Package removal and reinstallation is recommended.\n\n"
                     "Missing file: {}".format(trisomy.templateFile))
+        else:
+            print("target config exists: {}".format(str(target)))
 
 
 class FactoryResetCommand(sublime_plugin.WindowCommand):

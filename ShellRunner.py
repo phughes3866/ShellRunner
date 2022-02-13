@@ -12,8 +12,8 @@ import json
 pp = pprint.PrettyPrinter(indent=4)
 from threading import Thread
 from collections import namedtuple
-configFileGroup = namedtuple('configFileGroup', 'userFile templateFile exampleFile')
-configFiles = {}
+initFileInfo = namedtuple('initFileInfo', 'filePath templateResource templateStr')
+initFiles = {}
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
 plugin_canon_name = 'ShellRunner'
@@ -22,26 +22,17 @@ templateSubDir = "configTemplates"
 outputToValues = ['newTab', 'sublConsole', 'cursorInsert', 'msgBox', 'clip', None]
 outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
-curPlatform = sublime.platform()
-if curPlatform == "osx":
-    curPlatform = "OSX"
-else:
-    curPlatform = curPlatform.capitalize()
-# We now have enough info to configure our global 'configFiles' dictionary
-configFiles['settings'] = configFileGroup("ShellRunner.sublime-settings",
-                                       "ShellRunner.settings-template",
-                                       # "{}/{}.settings-template".format(templateDir, plugin_canon_name),
-                                       "ShellRunnerExample.sublime-settings")
-configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
-                                             "ShellRunnerSideBar.menu-template",
-                                             # "{}/Side Bar.menu-template".format(templateDir),
-                                             "ShellRunnerSideBar.example-menu")
-configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
-                                             "ShellRunnerContext.menu-template",
-                                             "ShellRunnerExampleContext.sublime-menu")
-configFiles['keyMap'] = configFileGroup("Default ({}).sublime-keymap".format(curPlatform),
-                                        "ShellRunner.keymap-template",
-                                        "ShellRunnerExample.sublime-keymap")
+
+plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
+initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
+                                       "ShellRunnerExample.sublime-settings",
+                                       "{}")
+initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
+                                             "ShellRunnerSideBar.sublime-menu-startup",
+                                             "[]")
+initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
+                                             "ShellRunnerContext.sublime-menu-startup",
+                                             "[]")
 
 
 def showShRunnerError(errormsg):
@@ -72,9 +63,9 @@ class splitCommand():
 activeSettings = {
     "openTerminalCmd": {"usr": "", "def": ""},
     "showSidebarTerminalCmd": {"usr": True, "def": True},
-    "showContextTerminalCmd": {"usr": True, "def": True},
+    "showContextTerminalCmd": {"usr": False, "def": False},
     "showSidebarEditMenu": {"usr": True, "def": True},
-    "showContextEditMenu": {"usr": True, "def": True},
+    "showContextEditMenu": {"usr": False, "def": False},
     "initChangeDir": {"usr": True, "def": True},
     "outputTo": {"usr": [""], "def": [""]},
     "outputTabName": {"usr": "", "def": ""},
@@ -135,39 +126,35 @@ def setupConfigFileFramework(factoryReset=False):
     used by the user 'editConfigFile' functions that present the 'example' file next to
     the 'user' file for handy editing.
     """
-    global configFiles
-    # determine the running platform (Linux, Windows or OSX)
-    # `- so we can correctly name our 'Default (${platform}).sublime-keymap' file
+    global initFiles
 
-
-    # Set up 4x config files:
+    # Ensure set up of 3x config files in 'loose package dir':
     # `- copy 'template' version to 'user' version
     #    unless 'user' version exists or factoryReset=True
-    plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name
-    if not plugin_loose_pkg_dir.is_dir():
-        plugin_loose_pkg_dir.mkdir()
-    for key, trisomy in configFiles.items():
-        target = plugin_loose_pkg_dir / trisomy.userFile
+    global plugin_loose_pkg_dir
+    menusDir = plugin_loose_pkg_dir / "menus" / "userVariants"
+    if not menusDir.is_dir():
+        menusDir.mkdir(parents=True)
+
+    for key, trisomy in initFiles.items():
+        target = plugin_loose_pkg_dir / trisomy.filePath
         if not target.is_file() or factoryReset:
-            foundList = sublime.find_resources(trisomy.templateFile)
+            foundList = sublime.find_resources(trisomy.templateResource)
             if foundList:
-                # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
                 template = sublime.load_resource(foundList[0])
-                print("set up config: {}\nWith template: {}".format(str(target), foundList[0]))
-                with open(str(target), 'w') as f:
-                    f.write(template)
-                    f.close()
             else:
-                showShRunnerError("ERROR: CORE FILE MISSING\n\n"
-                    "It appears your ShellRunner installation has been corrupted. "
-                    "Package removal and reinstallation is recommended.\n\n"
-                    "Missing file: {}".format(trisomy.templateFile))
+                template = trisomy.templateStr
+            print("writing new: {}".format(str(target)))
+            with open(str(target), 'w') as f:
+                f.write(template)
+                f.close()
         else:
             print("target config exists: {}".format(str(target)))
 
 
 class FactoryResetCommand(sublime_plugin.WindowCommand):
     def run(self):
+        global plugin_loose_pkg_dir
         ans = sublime.ok_cancel_dialog(
             "Do you really want to perform a factory reset?\n\n"
             "This will erase all {} user settings you have implemented, "
@@ -177,10 +164,14 @@ class FactoryResetCommand(sublime_plugin.WindowCommand):
         )
         if not ans:
             return
-        setupConfigFileFramework(factoryReset=True)
         # reset our activeSettings back to the defaults
         for key, value in activeSettings.items():
             activeSettings[key]['usr'] = activeSettings[key]['def']
+        for p in plugin_loose_pkg_dir.glob("*.sublime-keymap"):
+            # print('removing {}'.format(str(p)))
+            p.unlink()
+        plugin_loaded(factoryReset=True)
+        # setupConfigFileFramework(factoryReset=True)
 
 def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
     """
@@ -197,7 +188,7 @@ def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
         else:
             consoleWarn("Unknown setting [{}] in {} (Ignored)".format(k, projectFileName))
 
-def plugin_loaded():
+def plugin_loaded(factoryReset=False):
     """
     1. Sets up global: configFile dictionary + ensures necessary config files are in place
     2. Loads initial set of ShellRunner settings into global: activeSettings dictionary
@@ -205,6 +196,7 @@ def plugin_loaded():
     def readInUserSettings():
         global activeSettings
         nonlocal srSettings
+        print('we be reading user settings')
         # A: Load relevant settings from 'srSettings' object (i.e. ShellRunner.sublime-settings file(s))
         srSettsAsDict = srSettings.to_dict()
         for key, value in srSettsAsDict.items():
@@ -221,10 +213,8 @@ def plugin_loaded():
 
 
     # Step A:
-    # setupConfigFileFramework()
-    plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
-    if not plugin_loose_pkg_dir.is_dir():
-        plugin_loose_pkg_dir.mkdir(parents=True)
+    setupConfigFileFramework(factoryReset=factoryReset)
+
     # Step B: Load in a local sublime 'Settings' object with the ShellRunner settings
     # Note: ShellRunner's functions do not access this 'Settings' object directly.
     #    `- ShellRunner uses a callback event on this object to maintain a
@@ -249,87 +239,32 @@ class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
             settingsUpdateByProject(proj_plugin_settings, window.project_file_name())
 
 
-def editConfigFile(thisGrp, thisWindow):
-    plugin_loaded()
-    userConfigFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
-    egConfigFileRelPath = pathlib.Path(plugin_canon_name) / exampleSubDir / thisGrp.exampleFile
-    args = {"base_file": "${packages}" + "/" + str(egConfigFileRelPath),
-            # "user_file": "{}".format(str(userConfigFile)),
+def editConfigFile(userFile, relBaseFile, thisWindow):
+    args = {"base_file": "${packages}/ShellRunner/" + relBaseFile,
+            "user_file": userFile,
             }
     thisWindow.run_command('edit_settings', args)
 
 
 class EditShellrunnerSidebarCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        # editConfigFile(configFiles['sideBarMenu'], self.window)
-        plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
-        if not plugin_loose_pkg_dir.is_dir():
-            plugin_loose_pkg_dir.mkdir(parents=True)
-        defaultFill = "{\"randomised\": \"SideBarsetting\" }"
-        foundList = sublime.find_resources("ShellRunnerSideBar.sublime-menu-startup")
-        if foundList:
-            for thisResource in foundList:
-                if "userFreshInit" in thisResource:
-                    defaultFill = sublime.load_resource(thisResource)
-                    break
-        # sublime.message_dialog('found: {}'.format(defaultFill))
-        # if foundList:
-            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
-            # template = sublime.load_resource(foundList[0])
-        args = {"base_file": "${packages}/ShellRunner/menus/exampleCommands/ShellRunnerExampleSideBar.sublime-menu",
-                "user_file": "${packages}/ShellRunner/menus/userVariants/Side Bar.sublime-menu",
-                "default": defaultFill,
-                }
-        self.window.run_command('edit_settings', args)
-
+        editConfigFile(str(initFiles['sideBarMenu'].filePath),
+                    "menus/exampleCommands/ShellRunnerExampleSideBar.sublime-menu",
+                    self.window)
 
 
 class EditShellrunnerContextCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        # editConfigFile(configFiles['contextMenu'], self.window)
-        plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
-        if not plugin_loose_pkg_dir.is_dir():
-            plugin_loose_pkg_dir.mkdir(parents=True)
-        defaultFill = "{\"randomised\": \"ContextMenusetting\" }"
-        foundList = sublime.find_resources("ShellRunnerContext.sublime-menu-startup")
-        if foundList:
-            for thisResource in foundList:
-                if "userFreshInit" in thisResource:
-                    defaultFill = sublime.load_resource(thisResource)
-                    break
-        # sublime.message_dialog('found: {}'.format(defaultFill))
-        # if foundList:
-            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
-            # template = sublime.load_resource(foundList[0])
-        args = {"base_file": "${packages}/ShellRunner/menus/exampleCommands/ShellRunnerExampleContext.sublime-menu",
-                "user_file": "${packages}/ShellRunner/menus/userVariants/Context.sublime-menu",
-                "default": defaultFill,
-                }
-        self.window.run_command('edit_settings', args)
-
-
-# class EditShellrunnerKeyBindingsCommand(sublime_plugin.WindowCommand):
-#     def run(self):
-#         editConfigFile(configFiles['keyMap'], self.window)
+        editConfigFile(str(initFiles['contextMenu'].filePath),
+                    "menus/exampleCommands/ShellRunnerExampleContext.sublime-menu",
+                    self.window)
 
 
 class EditShellrunnerSettingsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        # editConfigFile(configFiles['settings'], self.window)
-        defaultFill = "{\"randomised\": \"setting\" }"
-        foundList = sublime.find_resources("ShellRunnerExample.sublime-settings")
-        if foundList:
-            defaultFill = sublime.load_resource(foundList[0])
-        # sublime.message_dialog('found: {}'.format(foundList))
-        # if foundList:
-            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
-            # template = sublime.load_resource(foundList[0])
-        args = {"base_file": "${packages}/ShellRunner/ShellRunnerExample.sublime-settings",
-                "user_file": "${packages}/User/ShellRunner.sublime-settings",
-                "default": defaultFill,
-                }
-        self.window.run_command('edit_settings', args)
-
+        editConfigFile(str(initFiles['settings'].filePath),
+                    "settings/ShellRunnerExample.sublime-settings",
+                    self.window)
 
 class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):
     def is_visible(self):

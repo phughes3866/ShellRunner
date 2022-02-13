@@ -32,7 +32,12 @@
                         	  },
                         	{
                         	    "caption": "Key Bindings",
-                        	    "command": "edit_shellrunner_key_bindings",
+                        	    "command": "edit_settings",
+                                "args":
+                                {
+                                    "base_file": "${packages}/ShellRunner/keymaps/Default (${platform}).sublime-keymap",
+                                    "default": "[\n\t$0\n]\n"
+                                }
                         	  },
                         ]
                     }

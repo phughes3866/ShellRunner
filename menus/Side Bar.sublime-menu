@@ -1,0 +1,21 @@
+[
+	{   "id": "shell_runner_sidebar_menu", "caption": "-" },
+	{
+		"caption": "Open Terminal Here",
+		"command": "sidebar_open_terminal_here",
+		"args":	{ "paths": []},
+	},
+	{
+		"caption": "ShellRunner Commands",
+		"command": "sidebar_edit_menu_viewability",
+		"id": "shell_runner_sidebar_commands_parent",
+
+		"children": [
+			{
+				"caption": "Edit Side Bar Menu Shell Commands…",
+				"command": "edit_shellrunner_sidebar_commands",
+			},
+			{"caption": "-", "id": "shell_runner_sidebar_commands_below_here"},
+
+
+]}]

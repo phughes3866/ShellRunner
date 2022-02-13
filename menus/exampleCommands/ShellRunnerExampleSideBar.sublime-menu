@@ -1,0 +1,278 @@
+// ShellRunner ExampleSideBar.sublime-menu file.
+// This inactive file is intended to be used as a template from
+// `- which users can build their own active 'Side Bar.sublime-menu'
+//  - file (which will presently be in the right hand panel if you're
+//  - using the standard side bar edit mode of ShellRunner).
+//  - Copy entries from here to there, and save to make active.
+
+// Note: The commands below are rather geared to Linux and the Bourne Again Shell (bash).
+
+[{"id": "shell_runner_sidebar_commands_parent",	"children": [
+	{ "caption" : "-", "id": "shell_runner_sidebar_commands_below_here"},
+
+	// Insert custom side bar menu commands here.
+	// See -> Command Palette: ShellRunner README for shellCommand syntax details
+	// For example:
+    {
+		"caption":	"ShellRunner Sidebar Command Demo",
+		"command":	"sidebar_shellrunner_text_command",
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Hello ${platform} Sublime Text user.; ",
+										"printf \"Welcome to some ShellRunner plugin functionality.\n\n\";",
+										"printf \"You should now comment out this demo command \";",
+										"printf \"and set about configuring ShellRunner to meet your needs (\";",
+										"printf \"configuration instructions can be found in the ShellRunner README \";",
+										"printf \", which is available via the Sublime Text command palette).\";",
+										"'"],
+				 	"outputTo": "msgBox", 
+				}
+	},
+
+ //    {
+	// 	"caption":	"spawn: open .py file in nano",
+	// 	"command":	"sidebar_shellrunner_spawn_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/gnome-terminal -- /usr/bin/bash -c '/usr/bin/nano ${lastFile}'",
+	// 			 	"targetExtensions": [".py"], 
+	// 			 	"files": [],
+	// 			}
+	// },
+	// {
+	// 	"caption":	"spawn: open pic file in geeqie",
+	// 	"command":	"sidebar_shellrunner_spawn_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/geeqie '${lastFile}'",
+	// 			 	"targetExtensions": [".jpg", ".png", ".jpeg"],
+	// 			 	"files": [],
+	// 			}
+	// },
+	// {
+	// 	"caption":	"spawn: perform some silent shell operation",
+	// 	"command":	"sidebar_shellrunner_spawn_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c 'echo \"This text is echoed to nowhere.\"'",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: insert stdout in current doc",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	// Note: For visual convenience, you can write your shellCommand as a list of strings,
+	// 				//    `- and place each string on a new line. ShellRunner will simply join the lines
+	// 				//     - together to make the whole command.
+	// 				"shellCommand": ["/usr/bin/bash -c 'printf \"\n\n\"; printf '=%.0s' {1..76}; ",
+	// 									"printf \"\nShellRunner can insert command output into the active document.\n\"; ",
+	// 									"echo This is what is happening here because \\\"outputTo\\\" is set to \\\"cursorInsert\\\".; ",
+	// 									"echo You can also set \\\"outputTo\\\" to \\\"newTab\\\", \\\"msgBox\\\", \\\"clip\\\", or \\\"sublConsole\\\".; ",
+	// 									"echo You can probably guess where the text goes for each of these settings.; ",
+	// 									"echo \"(ctrl-Z will work to undo this demo text insertion)\"; ",
+	// 									"printf \"=%.0s\" {1..76}; printf \"\n\n\"'"],
+	// 			 	"outputTo": "cursorInsert",
+	// 			 	"initChangeDir": false,
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: continue despite non-zero shell exit",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell ",
+	// 								"exit.; echo But with textCmdStopOnErr false, ",
+	// 								"we do not fail.; printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}; exit 77;'"],
+	// 			 	"outputTo": "newTab",
+	// 			 	"outputTabName": "ShellRunner Demo",
+	// 			 	"textCmdStopOnErr": false,
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: send stdout AND stderr to new tab",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo ShellRunner demo combining stdout and stderr:;",
+	// 								" echo [this is stdout text] ; echo [this is stderr text] 1>&2 ; ",
+	// 								"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}'"],
+	// 			 	"cmdCombineOutputStreams": true,
+	// 			 	"outputTo": "newTab",
+	// 			 	"outputTabName": "ShellRunner Demo",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: command timeout (10 secs) demo",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c 'sleep 15; echo never_never'",
+	// 			 	"outputTo": [ "clip", "newTab"],
+	// 			 	"outputTabName": "ShellRunner Demo",
+	// 			 	"consoleDebug": true,
+	// 				"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: ls command for dirs only",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c 'echo Directory Listing for ${lastDir}: ; ls ${lastDir}'",
+	// 				"outputTo": [ "sublConsole", "msgBox" ],
+	// 				"dirOnly": true,
+	// 				"dirs": [],
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: cat sidebar selected file(s) to new tab",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
+	// 				"outputTo": "newTab",
+	// 			 	"outputTabName": "ShellRunner Demo",
+	// 				"files": [],
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: using substitution variables",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo \"\\${INTO_ENV} ",
+	// 								"${featureA} OR ${featureB}\"; printf -- \"%s\n\n\" \"For example:\"; echo \"Working Dir (PWD) = ${PWD}\"; ",
+	// 								"cd \/; echo \"cd \/ (change to the root dir for demo purposes)\"; echo \"Working Dir (PWD) = ${PWD} (incorrect: should show root dir)\"; ",
+	// 								"echo \"The above PWD outputs are the same as they were both replaced at command build time, i.e. pre-shell\"; ",
+	// 								"echo \"Working Dir (as expanded by shell) (PWD) = \\${PWD} (this now correctly shows the root dir)\";",
+	// 								"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand};'"],
+	// 				"outputTo": "msgBox",
+	// 				// "tabDebugReport": true,
+	// 				"extraCmdSubstVars": 	{ 	"featureA"		:	"use shell environment vars at command build time",
+	// 											"featureB"		:	"(when they're escaped), leave expansion of environment vars to the shell at run time"
+	// 										},
+	// 				"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"ShellRunner can"
+	// 										},
+	// 			}
+	// },	{
+	// 	"caption":	"txt: using shell env variables",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": [ "/usr/bin/bash -c 'echo ${INTO_ENV};",
+	// 								"echo \"HOME dir = [\\${HOME}] (empty as presently we have exported no env vars to our new shell).\"; echo ShellRunner can also create new shell env vars.; ",
+	// 								"echo In this demo we have created MOMENTOUS = DIOGENES;",
+	// 								"echo Here [${MOMENTOUS}] is pre-shell expanded; ",
+	// 								"echo Here [\\${MOMENTOUS}] is in-shell expanded; ",
+	// 								"echo Note: Leave var expansion to the shell with double backslash; echo;",
+	// 								"echo Currently, as we have cleared the ENV, we only have a few env vars. Here they are::; env'"],
+	// 				"outputTo": "msgBox",
+	// 				"cleanShellEnv": true,
+	// 				"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"With the shell env cleared we have no HOME dir.",
+	// 											"MOMENTOUS"	:	"DIOGENES"
+	// 										},
+	// 			}
+	// },	{
+	// 	"caption":	"txt: hassle free quotes in variables",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	
+	// 				// This example shows how to use single and double quotes in Env and substitution vars
+	// 				"shellCommand": [ "/usr/bin/bash -c 'printf \"%s\n\" ${CharX}; ",
+	// 				                  "echo \"Using complex characters, especially quotation marks, is tricky to do directly.\"; ",
+	// 				                  "echo \"Subst VarA: ${Sstra}\"; ",
+	// 				                  "echo \"Subst VarB: ${Sstrb}\"; ",
+	// 				                  "echo \"ShellRunner can also set shell ENV vars.\"; ",
+	// 				                  "echo \"These ENV vars can be used at command build time (pre-shell) or run time (in-shell).\"; ",
+	// 				                  "printf \"Env VarA (pre-shell): ${Estra}\n\"; ",
+	// 				                  "printf \"Env VarB (pre-shell): ${Estrb}\n\"; ",
+	// 				                  "echo \"Env VarA (in-shell): \\${Estra}\"; ",
+	// 				                  "echo \"Env VarB (in-shell): \\${Estrb}\"; ",
+	// 				                  "'",
+	// 				                ],
+	// 				"outputTo": ["msgBox", "clip"],
+	// 				"extraCmdSubstVars":	{ 	"Sstra"	:	"This line's got single quotes. It's working fine.",
+	// 											"Sstrb" :   "This line has \\\"double\\\" quotes. They work \\\"fine\\\" too.",
+	// 											"CharX" :   "$'It\\'s possible to use most/all complex characters via a substituted literal-string variable like this one e.g. {[(/\\@~#;:,.?><!\"£$`|%^&*\\')]}'",
+	// 										},
+	// 				"extraCmdShellEnvVars":	{ 	"Estra"	:	"BEST_USE_RESTRICTED_CHARSET_FOR_ENV_VARS",
+	// 											"Estrb"	:	"It's unclear how the mind's eye works."
+	// 										},
+	// 			}
+	// },	{
+	// 	"caption":	"txt: hassle free selection text",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	
+	// 				// some special characters in strings e.g. quotes, backslashes, can cause problems with shell syntax
+	// 				// `- with the ${selText} substitution variable you can ensure these characters don't cause problems
+	// 				//  - by setting "selAsLiteralStr" to true - as follows
+	// 				"shellCommand": ["/usr/bin/bash -c '[ -z ${selText} ] && printf -- \"%s\n\n%s\" ",
+	// 								"\"ShellRunner selected text demo. Please select one or more sections of text, as complex as you like,  and run again.\n\" ${shellCommand}",
+	// 								"|| printf -- \"%s\" ${selText};",
+	// 								"'"],
+	// 				"outputTo": ["msgBox", "clip"],
+	// 				"selAsLiteralStr": true,
+	// 				"multiSelSeparator": "--joiner--",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: substitution var demo 1",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(1):\n",
+	// 		                         "\\${platform}: ${platform}\n",
+	// 		                         "\\${packages}: ${packages}\n",
+	// 		                         "\\${file}: ${file}\n",
+	// 		                         "\\${file_path}: ${file_path}'",
+	// 			                     ],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: substitution var demo 2",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(2):\n",
+	// 		                         "\\${file_name}: ${file_name}\n",
+	// 		                         "\\${file_base_name}: ${file_base_name}\n",
+	// 		                         "\\${project_extension}: ${project_extension}'",
+	// 			                     ],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: substitution var demo 3",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(3):\n",
+	// 		                         "\\${file_extension}: ${file_extension}\n",
+	// 		                         "\\${folder}: ${folder}\n",
+	// 		                         "\\${project}: ${project}'",
+	// 			                     ],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: substitution var demo 4",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'Sublime window substitution vars(4):\n",
+	// 		                         "\\${project_path}: ${project_path}\n",
+	// 		                         "\\${project_name}: ${project_name}\n",
+	// 		                         "\\${project_base_name}: ${project_base_name}'",
+	// 			                     ],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: sidebar [files] substitution",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'From \"files: []\" arg in sidebar command",
+	// 		                         " we get two substitution vars (as strings):\n",
+	// 		                         "\\${files}: ${files}\n",
+	// 		                         "\\${lastFile}: ${lastFile}\n",
+	// 		                         "(strings are empty if data is unavailable)'",
+	// 			                     ],
+	// 				"files": [],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: sidebar [dirs] substitution",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'From \"dirs: []\" arg in sidebar command",
+	// 		                         " we get two substitution vars (as strings):\n",
+	// 		                         "\\${dirs}: ${dirs}\n",
+	// 		                         "\\${lastDir}: ${lastDir}\n",
+	// 		                         "(strings are empty if data is unavailable)'",
+	// 			                     ],
+	// 				"dirs": [],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+	// {
+	// 	"caption":	"txt: sidebar [paths] substitution",
+	// 	"command":	"sidebar_shellrunner_text_command",
+	// 	"args":	{	"shellCommand": ["printf -- 'From \"paths: []\" arg in sidebar command",
+	// 		                         " we get two substitution vars (as strings):\n",
+	// 		                         "\\${paths}: ${paths}\n",
+	// 		                         "\\${lastPath}: ${lastPath}\n",
+	// 		                         "(strings are empty if data is unavailable)'",
+	// 			                     ],
+	// 				"paths": [],
+	// 				"outputTo": "msgBox",
+	// 			}
+	// },
+]}]

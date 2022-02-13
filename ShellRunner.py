@@ -35,7 +35,7 @@ configFiles['settings'] = configFileGroup("ShellRunner.sublime-settings",
 configFiles['sideBarMenu'] = configFileGroup("Side Bar.sublime-menu",
                                              "ShellRunnerSideBar.menu-template",
                                              # "{}/Side Bar.menu-template".format(templateDir),
-                                             "ShellRunnerExampleSideBar.sublime-menu")
+                                             "ShellRunnerSideBar.example-menu")
 configFiles['contextMenu'] = configFileGroup("Context.sublime-menu",
                                              "ShellRunnerContext.menu-template",
                                              "ShellRunnerExampleContext.sublime-menu")
@@ -221,7 +221,10 @@ def plugin_loaded():
 
 
     # Step A:
-    setupConfigFileFramework()
+    # setupConfigFileFramework()
+    plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
+    if not plugin_loose_pkg_dir.is_dir():
+        plugin_loose_pkg_dir.mkdir(parents=True)
     # Step B: Load in a local sublime 'Settings' object with the ShellRunner settings
     # Note: ShellRunner's functions do not access this 'Settings' object directly.
     #    `- ShellRunner uses a callback event on this object to maintain a
@@ -251,29 +254,81 @@ def editConfigFile(thisGrp, thisWindow):
     userConfigFile = pathlib.Path(sublime.packages_path()) / plugin_canon_name / thisGrp.userFile
     egConfigFileRelPath = pathlib.Path(plugin_canon_name) / exampleSubDir / thisGrp.exampleFile
     args = {"base_file": "${packages}" + "/" + str(egConfigFileRelPath),
-            "user_file": "{}".format(str(userConfigFile)),
+            # "user_file": "{}".format(str(userConfigFile)),
             }
     thisWindow.run_command('edit_settings', args)
 
 
 class EditShellrunnerSidebarCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        editConfigFile(configFiles['sideBarMenu'], self.window)
+        # editConfigFile(configFiles['sideBarMenu'], self.window)
+        plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
+        if not plugin_loose_pkg_dir.is_dir():
+            plugin_loose_pkg_dir.mkdir(parents=True)
+        defaultFill = "{\"randomised\": \"SideBarsetting\" }"
+        foundList = sublime.find_resources("ShellRunnerSideBar.sublime-menu-startup")
+        if foundList:
+            for thisResource in foundList:
+                if "userFreshInit" in thisResource:
+                    defaultFill = sublime.load_resource(thisResource)
+                    break
+        # sublime.message_dialog('found: {}'.format(defaultFill))
+        # if foundList:
+            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
+            # template = sublime.load_resource(foundList[0])
+        args = {"base_file": "${packages}/ShellRunner/menus/exampleCommands/ShellRunnerExampleSideBar.sublime-menu",
+                "user_file": "${packages}/ShellRunner/menus/userVariants/Side Bar.sublime-menu",
+                "default": defaultFill,
+                }
+        self.window.run_command('edit_settings', args)
+
 
 
 class EditShellrunnerContextCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        editConfigFile(configFiles['contextMenu'], self.window)
+        # editConfigFile(configFiles['contextMenu'], self.window)
+        plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name / "menus" / "userVariants"
+        if not plugin_loose_pkg_dir.is_dir():
+            plugin_loose_pkg_dir.mkdir(parents=True)
+        defaultFill = "{\"randomised\": \"ContextMenusetting\" }"
+        foundList = sublime.find_resources("ShellRunnerContext.sublime-menu-startup")
+        if foundList:
+            for thisResource in foundList:
+                if "userFreshInit" in thisResource:
+                    defaultFill = sublime.load_resource(thisResource)
+                    break
+        # sublime.message_dialog('found: {}'.format(defaultFill))
+        # if foundList:
+            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
+            # template = sublime.load_resource(foundList[0])
+        args = {"base_file": "${packages}/ShellRunner/menus/exampleCommands/ShellRunnerExampleContext.sublime-menu",
+                "user_file": "${packages}/ShellRunner/menus/userVariants/Context.sublime-menu",
+                "default": defaultFill,
+                }
+        self.window.run_command('edit_settings', args)
 
 
-class EditShellrunnerKeyBindingsCommand(sublime_plugin.WindowCommand):
-    def run(self):
-        editConfigFile(configFiles['keyMap'], self.window)
+# class EditShellrunnerKeyBindingsCommand(sublime_plugin.WindowCommand):
+#     def run(self):
+#         editConfigFile(configFiles['keyMap'], self.window)
 
 
 class EditShellrunnerSettingsCommand(sublime_plugin.WindowCommand):
     def run(self):
-        editConfigFile(configFiles['settings'], self.window)
+        # editConfigFile(configFiles['settings'], self.window)
+        defaultFill = "{\"randomised\": \"setting\" }"
+        foundList = sublime.find_resources("ShellRunnerExample.sublime-settings")
+        if foundList:
+            defaultFill = sublime.load_resource(foundList[0])
+        # sublime.message_dialog('found: {}'.format(foundList))
+        # if foundList:
+            # sublime.message_dialog("found resources = {}\n\nLoad [0]: {}".format(foundList, sublime.load_resource(foundList[0])))
+            # template = sublime.load_resource(foundList[0])
+        args = {"base_file": "${packages}/ShellRunner/ShellRunnerExample.sublime-settings",
+                "user_file": "${packages}/User/ShellRunner.sublime-settings",
+                "default": defaultFill,
+                }
+        self.window.run_command('edit_settings', args)
 
 
 class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):

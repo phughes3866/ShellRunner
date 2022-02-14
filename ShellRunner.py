@@ -46,7 +46,9 @@ def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
             endedUpWith = sublime.load_resource(foundList[0])
             loadedIt = True
             print('successfully loaded loose resource: {}'.format(foundList[0]))
-        except:
+        except Exception as err:
+            print("An exception occurred in accessing loose resource: {}\n\n",
+                              "Details:: {}\n\n{}".format(foundList[0], err.__class__.__name__, err))
             endedUpWith = default
     if not loadedIt:
         try:
@@ -54,7 +56,9 @@ def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
                 with zipPackage.open(uniqueResPath) as targetFile:
                     endedUpWith = targetFile.read().decode('UTF-8')
                     print('successfully loaded zipped resource: {}'.format(uniqueResPath))
-        except:
+        except Exception as err:
+            print("An exception occurred in accessing zipped resource: {}\n\n",
+                              "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
             endedUpWith = default
     sublime.message_dialog(endedUpWith)
     return endedUpWith

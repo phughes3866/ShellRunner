@@ -25,38 +25,46 @@ outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
 plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
 initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
-                                       "settings/ShellRunnerExample.sublime-settings",
+                                       "ShellRunnerExample.sublime-settings",
                                        "{}")
 initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
-                                             "menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
+                                             "ShellRunnerSideBar.sublime-menu-startup",
                                              "[]")
 initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
-                                             "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
+                                             "ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
-def loadPkgResource(resName, default=None, tryTimes=1):
-    targetRes = "Packages/ShellRunner/{}".format(resName)
+def loadPkgResource(uniqueResName, default=None, tryTimes=1):
+    # targetRes = "Packages/ShellRunner/{}".format(uniqueResName)
     endedUpWith = default
-    isLoaded = False
-    for x in range(1,tryTimes):
+    foundList = sublime.find_resources(uniqueResName)
+    if foundList:
         try:
-            endedUpWith = sublime.load_resource(targetRes)
-            print("success with load loose pkg item")
-            raise ValueError('ph raised exception for test.')
-            isLoaded = True
+            endedUpWith = sublime.load_resource(foundList[0])
+            print('successfully loaded resource: {}'.format(foundList[0]))
         except:
-            try:
-                print("trying to load zipped sublime-package item")
-                endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
-                print("success with load zipped sublime-package item")
-                isLoaded = True
-            except Exception as err:
-                print("An exception occurred in loading binary resource: {}\n\n",
-                                  "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
-                # print("success with load default (no pkg resource found)")
-        if x < tryTimes:
-            print('delay 2 secs as x({}) < {}'.format(x, tryTimes))
-            time.sleep(2)
+            endedUpWith = default
+
+    # isLoaded = False
+    # for x in range(1,tryTimes):
+    #     try:
+    #         endedUpWith = sublime.load_resource(targetRes)
+    #         print("success with load loose pkg item")
+    #         raise ValueError('ph raised exception for test.')
+    #         isLoaded = True
+    #     except:
+    #         try:
+    #             print("trying to load zipped sublime-package item")
+    #             endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
+    #             print("success with load zipped sublime-package item")
+    #             isLoaded = True
+    #         except Exception as err:
+    #             print("An exception occurred in loading binary resource: {}\n\n",
+    #                               "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
+    #             # print("success with load default (no pkg resource found)")
+    #     if x < tryTimes:
+    #         print('delay 2 secs as x({}) < {}'.format(x, tryTimes))
+    #         time.sleep(2)
     return endedUpWith
 
 def showShRunnerError(errormsg):

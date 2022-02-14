@@ -34,21 +34,28 @@ initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVa
                                              "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
-def loadPkgResource(resName, default=None):
+def loadPkgResource(resName, default=None, tryTimes=1):
     targetRes = "Packages/ShellRunner/{}".format(resName)
-    try:
-        endedUpWith = sublime.load_resource(targetRes)
-        print("success with load loose pkg item")
-    except:
+    endedUpWith = default
+    isLoaded = False
+    for x in range(1,tryTimes):
         try:
-            print("trying to load zipped sublime-package item")
-            endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
-            print("success with load zipped sublime-package item")
-        except Exception as err:
-            print("An exception occurred in loading binary resource: {}\n\n",
-                              "Details:: {}\n\n{}").format(targetRes, err.__class__.__name__, err)
-            endedUpWith = default
-            print("success with load default (no pkg resource found)")
+            endedUpWith = sublime.load_resource(targetRes)
+            print("success with load loose pkg item")
+            isLoaded = True
+        except:
+            try:
+                print("trying to load zipped sublime-package item")
+                endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
+                print("success with load zipped sublime-package item")
+                isLoaded = True
+            except Exception as err:
+                print("An exception occurred in loading binary resource: {}\n\n",
+                                  "Details:: {}\n\n{}").format(targetRes, err.__class__.__name__, err)
+                # print("success with load default (no pkg resource found)")
+        if x < tryTimes:
+            print('delay 2 secs as x({}) < {}'.format(x, tryTimes))
+            time.sleep(2)
     return endedUpWith
 
 def showShRunnerError(errormsg):
@@ -155,7 +162,7 @@ def setupConfigFileFramework(factoryReset=False):
     for key, trisomy in initFiles.items():
         target = plugin_loose_pkg_dir / trisomy.filePath
         if not target.is_file() or factoryReset:
-            template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr)
+            template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr, tryTimes=3)
             print("writing new: {}".format(str(target)))
             with open(str(target), 'w') as f:
                 f.write(template)
@@ -225,7 +232,7 @@ def plugin_loaded(factoryReset=False):
 
 
     # Step A:
-    setupConfigFileFramework(factoryReset=factoryReset)
+    sublime.set_timeout_async(setupConfigFileFramework(factoryReset=factoryReset), 1000)
 
     # Step B: Load in a local sublime 'Settings' object with the ShellRunner settings
     # Note: ShellRunner's functions do not access this 'Settings' object directly.

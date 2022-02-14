@@ -41,9 +41,12 @@ def loadPkgResource(resName, default=None):
         print("success with load loose pkg item")
     except:
         try:
+            print("trying to load zipped sublime-package item")
             endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
             print("success with load zipped sublime-package item")
-        except:
+        except Exception as err:
+            print("An exception occurred in loading binary resource: {}\n\n",
+                              "Details:: {}\n\n{}").format(targetRes, err.__class__.__name__, err)
             endedUpWith = default
             print("success with load default (no pkg resource found)")
     return endedUpWith

@@ -42,6 +42,7 @@ def loadPkgResource(resName, default=None, tryTimes=1):
         try:
             endedUpWith = sublime.load_resource(targetRes)
             print("success with load loose pkg item")
+            raise ValueError('ph raised exception for test.')
             isLoaded = True
         except:
             try:
@@ -51,7 +52,7 @@ def loadPkgResource(resName, default=None, tryTimes=1):
                 isLoaded = True
             except Exception as err:
                 print("An exception occurred in loading binary resource: {}\n\n",
-                                  "Details:: {}\n\n{}").format(targetRes, err.__class__.__name__, err)
+                                  "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
                 # print("success with load default (no pkg resource found)")
         if x < tryTimes:
             print('delay 2 secs as x({}) < {}'.format(x, tryTimes))

@@ -35,6 +35,8 @@ initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVa
                                              "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
+srSettings = {}
+
 def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
     targetResName = pathlib.Path(uniqueResPath).name
     # targetResFullPath = "{}/ShellRunner{}".format(sublime.installed_packages_path(), uniqueResPath)
@@ -62,42 +64,6 @@ def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
             endedUpWith = default
     sublime.message_dialog(endedUpWith)
     return endedUpWith
-    # for i in range(1,5):
-    #     print('looking for time {}'.format(i))
-    #     foundList = sublime.find_resources(uniqueResPath)
-    #     if foundList:
-    #         try:
-    #             endedUpWith = sublime.load_resource(foundList[0])
-    #             print('successfully loaded resource: {}'.format(foundList[0]))
-    #         except:
-    #             endedUpWith = default
-    #         finally:
-    #             break
-    #     if i < 5:
-    #         time.sleep(2)
-
-
-    # isLoaded = False
-    # for x in range(1,tryTimes):
-    #     try:
-    #         endedUpWith = sublime.load_resource(targetRes)
-    #         print("success with load loose pkg item")
-    #         raise ValueError('ph raised exception for test.')
-    #         isLoaded = True
-    #     except:
-    #         try:
-    #             print("trying to load zipped sublime-package item")
-    #             endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
-    #             print("success with load zipped sublime-package item")
-    #             isLoaded = True
-    #         except Exception as err:
-    #             print("An exception occurred in loading binary resource: {}\n\n",
-    #                               "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
-    #             # print("success with load default (no pkg resource found)")
-    #     if x < tryTimes:
-    #         print('delay 2 secs as x({}) < {}'.format(x, tryTimes))
-    #         time.sleep(2)
-
 def showShRunnerError(errormsg):
     sublime.message_dialog("{} Command Report::\n\n{}".format(plugin_canon_name, errormsg))
 
@@ -252,9 +218,11 @@ def plugin_loaded(factoryReset=False):
     1. Sets up global: configFile dictionary + ensures necessary config files are in place
     2. Loads initial set of ShellRunner settings into global: activeSettings dictionary
     """
+    global srSettings
+
     def readInUserSettings():
         global activeSettings
-        nonlocal srSettings
+        global srSettings
         print('we be reading user settings')
         # A: Load relevant settings from 'srSettings' object (i.e. ShellRunner.sublime-settings file(s))
         srSettsAsDict = srSettings.to_dict()
@@ -279,7 +247,16 @@ def plugin_loaded(factoryReset=False):
     #    `- ShellRunner uses a callback event on this object to maintain a
     #       global dictionary of settings called 'activeSettings'
     #       ShellRunner's functions read settings directly from 'activeSettings'
-    srSettings = sublime.load_settings('ShellRunner.sublime-settings')
+
+    for i in range(1,4):
+        srSettings = sublime.load_settings('ShellRunner.sublime-settings')
+        print ('type of settings obj: {}'.format(type(srSettings)))
+        if not srSettings:
+            print('delay/retry as no settings')
+            time.sleep(0.2)
+        else:
+            print("we have settings on go {}".format(i))
+            break
     # Step C: Populate global 'activeSettings'
     #      `- First from any ShellRunner.sublime-settings file(s)
     #         Second (and overridingly) from any 'ShellRunner' section of the active 'sublime-project' file   
@@ -289,6 +266,12 @@ def plugin_loaded(factoryReset=False):
     #            `- via a separate EventListener Class (ProjectSettingsUpdateListener)
     srSettings.clear_on_change('callBackKey')
     srSettings.add_on_change('callBackKey', readInUserSettings)
+
+def plugin_unloaded():
+    global srSettings
+    
+    srSettings.clear_on_change('callBackKey')
+    print('running plugin unloaded')
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):

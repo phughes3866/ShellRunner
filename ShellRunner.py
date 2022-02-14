@@ -37,13 +37,20 @@ initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVa
 def loadPkgResource(uniqueResName, default=None, tryTimes=1):
     # targetRes = "Packages/ShellRunner/{}".format(uniqueResName)
     endedUpWith = default
-    foundList = sublime.find_resources(uniqueResName)
-    if foundList:
-        try:
-            endedUpWith = sublime.load_resource(foundList[0])
-            print('successfully loaded resource: {}'.format(foundList[0]))
-        except:
-            endedUpWith = default
+    for i in range(1,5):
+        print('looking for time {}'.format(i))
+        foundList = sublime.find_resources(uniqueResName)
+        if foundList:
+            try:
+                endedUpWith = sublime.load_resource(foundList[0])
+                print('successfully loaded resource: {}'.format(foundList[0]))
+            except:
+                endedUpWith = default
+            finally:
+                break
+        if i < 5:
+            time.sleep(2)
+
 
     # isLoaded = False
     # for x in range(1,tryTimes):
@@ -241,7 +248,7 @@ def plugin_loaded(factoryReset=False):
 
 
     # Step A:
-    sublime.set_timeout_async(setupConfigFileFramework(factoryReset=factoryReset), 1000)
+    setupConfigFileFramework(factoryReset=factoryReset)
 
     # Step B: Load in a local sublime 'Settings' object with the ShellRunner settings
     # Note: ShellRunner's functions do not access this 'Settings' object directly.

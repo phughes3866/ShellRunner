@@ -12,7 +12,7 @@ import json
 pp = pprint.PrettyPrinter(indent=4)
 from threading import Thread
 from collections import namedtuple
-initFileInfo = namedtuple('initFileInfo', 'filePath templateResource templateStr')
+initFileInfo = namedtuple('initFileInfo', 'filePath templateFromPackage templateDefaultStr')
 initFiles = {}
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
@@ -25,15 +25,28 @@ outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
 plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
 initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
-                                       "ShellRunnerExample.sublime-settings",
+                                       "settings/ShellRunnerExample.sublime-settings",
                                        "{}")
 initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
-                                             "ShellRunnerSideBar.sublime-menu-startup",
+                                             "menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
                                              "[]")
 initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
-                                             "ShellRunnerContext.sublime-menu-startup",
+                                             "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
+def loadPkgResource(resName, default=None):
+    targetRes = "Packages/ShellRunner/{}".format(resName)
+    try:
+        endedUpWith = sublime.load_resource(targetRes)
+        print("success with load loose pkg item")
+    except:
+        try:
+            endedUpWith = sublime.load_binary_resource(targetRes).decode('utf8')
+            print("success with load zipped sublime-package item")
+        except:
+            endedUpWith = default
+            print("success with load default (no pkg resource found)")
+    return endedUpWith
 
 def showShRunnerError(errormsg):
     sublime.message_dialog("{} Command Report::\n\n{}".format(plugin_canon_name, errormsg))
@@ -139,11 +152,7 @@ def setupConfigFileFramework(factoryReset=False):
     for key, trisomy in initFiles.items():
         target = plugin_loose_pkg_dir / trisomy.filePath
         if not target.is_file() or factoryReset:
-            foundList = sublime.find_resources(trisomy.templateResource)
-            if foundList:
-                template = sublime.load_resource(foundList[0])
-            else:
-                template = trisomy.templateStr
+            template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr)
             print("writing new: {}".format(str(target)))
             with open(str(target), 'w') as f:
                 f.write(template)

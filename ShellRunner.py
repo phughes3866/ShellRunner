@@ -26,13 +26,13 @@ outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
 plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
 initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
-                                       "/settings/ShellRunnerExample.sublime-settings",
+                                       "settings/ShellRunnerExample.sublime-settings",
                                        "{}")
 initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
-                                             "/menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
+                                             "menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
                                              "[]")
 initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
-                                             "/menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
+                                             "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
 def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
@@ -58,7 +58,7 @@ def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
                     print('successfully loaded zipped resource: {}'.format(uniqueResPath))
         except Exception as err:
             print("An exception occurred in accessing zipped resource: {}\n\n",
-                              "Details:: {}\n\n{}".format(targetRes, err.__class__.__name__, err))
+                              "Details:: {}\n\n{}".format(uniqueResPath, err.__class__.__name__, err))
             endedUpWith = default
     sublime.message_dialog(endedUpWith)
     return endedUpWith

@@ -9,6 +9,7 @@ import time
 import trace
 import pprint
 import json
+import zipfile
 pp = pprint.PrettyPrinter(indent=4)
 from threading import Thread
 from collections import namedtuple
@@ -25,31 +26,51 @@ outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
 plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
 initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
-                                       "ShellRunnerExample.sublime-settings",
+                                       "/settings/ShellRunnerExample.sublime-settings",
                                        "{}")
 initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
-                                             "ShellRunnerSideBar.sublime-menu-startup",
+                                             "/menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
                                              "[]")
 initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
-                                             "ShellRunnerContext.sublime-menu-startup",
+                                             "/menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
                                              "[]")
 
-def loadPkgResource(uniqueResName, default=None, tryTimes=1):
-    # targetRes = "Packages/ShellRunner/{}".format(uniqueResName)
+def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
+    targetResName = pathlib.Path(uniqueResPath).name
+    # targetResFullPath = "{}/ShellRunner{}".format(sublime.installed_packages_path(), uniqueResPath)
     endedUpWith = default
-    for i in range(1,5):
-        print('looking for time {}'.format(i))
-        foundList = sublime.find_resources(uniqueResName)
-        if foundList:
-            try:
-                endedUpWith = sublime.load_resource(foundList[0])
-                print('successfully loaded resource: {}'.format(foundList[0]))
-            except:
-                endedUpWith = default
-            finally:
-                break
-        if i < 5:
-            time.sleep(2)
+    loadedIt = False
+    foundList = sublime.find_resources(targetResName)
+    if foundList:
+        try:
+            endedUpWith = sublime.load_resource(foundList[0])
+            loadedIt = True
+            print('successfully loaded loose resource: {}'.format(foundList[0]))
+        except:
+            endedUpWith = default
+    if not loadedIt:
+        try:
+            with zipfile.ZipFile(sublime.installed_packages_path() + '/ShellRunner.sublime-package') as zipPackage:
+                with zipPackage.open(uniqueResPath) as targetFile:
+                    endedUpWith = targetFile.read().decode('UTF-8')
+                    print('successfully loaded zipped resource: {}'.format(uniqueResPath))
+        except:
+            endedUpWith = default
+    sublime.message_dialog(endedUpWith)
+    return endedUpWith
+    # for i in range(1,5):
+    #     print('looking for time {}'.format(i))
+    #     foundList = sublime.find_resources(uniqueResPath)
+    #     if foundList:
+    #         try:
+    #             endedUpWith = sublime.load_resource(foundList[0])
+    #             print('successfully loaded resource: {}'.format(foundList[0]))
+    #         except:
+    #             endedUpWith = default
+    #         finally:
+    #             break
+    #     if i < 5:
+    #         time.sleep(2)
 
 
     # isLoaded = False
@@ -72,7 +93,6 @@ def loadPkgResource(uniqueResName, default=None, tryTimes=1):
     #     if x < tryTimes:
     #         print('delay 2 secs as x({}) < {}'.format(x, tryTimes))
     #         time.sleep(2)
-    return endedUpWith
 
 def showShRunnerError(errormsg):
     sublime.message_dialog("{} Command Report::\n\n{}".format(plugin_canon_name, errormsg))
@@ -178,7 +198,7 @@ def setupConfigFileFramework(factoryReset=False):
     for key, trisomy in initFiles.items():
         target = plugin_loose_pkg_dir / trisomy.filePath
         if not target.is_file() or factoryReset:
-            template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr, tryTimes=3)
+            template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr)
             print("writing new: {}".format(str(target)))
             with open(str(target), 'w') as f:
                 f.write(template)

@@ -237,6 +237,7 @@ def plugin_loaded(factoryReset=False):
             if proj_plugin_settings:
                 # any ShellRunner settings in the .sublime-project file will override same name Default/User settings
                 settingsUpdateByProject(proj_plugin_settings, sublime.active_window().project_file_name())
+        print('active settings after change trigger fn: {}'.format(activeSettings))
 
 
     # Step A:
@@ -248,6 +249,7 @@ def plugin_loaded(factoryReset=False):
     #       global dictionary of settings called 'activeSettings'
     #       ShellRunner's functions read settings directly from 'activeSettings'
 
+
     for i in range(1,4):
         srSettings = sublime.load_settings('ShellRunner.sublime-settings')
         print ('type of settings obj: {}'.format(type(srSettings)))
@@ -257,10 +259,12 @@ def plugin_loaded(factoryReset=False):
         else:
             print("we have settings on go {}".format(i))
             break
+    print('settings obj: {}'.format(srSettings.to_dict()))
     # Step C: Populate global 'activeSettings'
     #      `- First from any ShellRunner.sublime-settings file(s)
     #         Second (and overridingly) from any 'ShellRunner' section of the active 'sublime-project' file   
     readInUserSettings()
+    print('active settings just before callback is set: {}'.format(activeSettings))
     # Step D: Activate a listener for changes to the ShellRunner.sublime-settings file(s)
     #      `- Note: A listener for changes to the active 'sublime-project' file is implemented
     #            `- via a separate EventListener Class (ProjectSettingsUpdateListener)
@@ -269,9 +273,8 @@ def plugin_loaded(factoryReset=False):
 
 def plugin_unloaded():
     global srSettings
-    
     srSettings.clear_on_change('callBackKey')
-    print('running plugin unloaded')
+    # print('running plugin unloaded')
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):

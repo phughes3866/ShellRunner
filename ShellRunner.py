@@ -251,6 +251,8 @@ def plugin_loaded(factoryReset=False):
 
 
     for i in range(1,4):
+        foundList = sublime.find_resources('ShellRunner.sublime-settings')
+        print('found settings resources: {}'.format(foundList))
         srSettings = sublime.load_settings('ShellRunner.sublime-settings')
         print ('type of settings obj: {}'.format(type(srSettings)))
         if not srSettings.to_dict():

@@ -253,7 +253,7 @@ def plugin_loaded(factoryReset=False):
     for i in range(1,4):
         srSettings = sublime.load_settings('ShellRunner.sublime-settings')
         print ('type of settings obj: {}'.format(type(srSettings)))
-        if not srSettings:
+        if not srSettings.to_dict():
             print('delay/retry as no settings')
             time.sleep(0.2)
         else:

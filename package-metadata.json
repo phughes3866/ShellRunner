@@ -1,0 +1,1 @@
+{"sublime_text": ">=4150", "dependencies": [], "version": "1.0.0", "url": "https://github.com/phughes3866/ShellRunner", "platforms": ["*"], "description": "Run shell commands and use the returned text for editing purposes."}

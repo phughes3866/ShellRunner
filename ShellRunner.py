@@ -1,4 +1,5 @@
 import os
+import sys
 import pathlib
 import sublime
 import sublime_plugin
@@ -15,6 +16,8 @@ from threading import Thread
 from collections import namedtuple
 initFileInfo = namedtuple('initFileInfo', 'filePath templateFromPackage templateDefaultStr')
 initFiles = {}
+
+
 
 plugin_settings_file = 'ShellRunner.sublime-settings'
 plugin_canon_name = 'ShellRunner'
@@ -44,6 +47,11 @@ initFiles['keyMap'] = initFileInfo(sublime_user_dir / "ShellRunner" / "Default (
                                              "[]")
 
 srSettings = {}
+
+
+# class TestingListener(sublime_plugin.EventListener):
+#   def on_init(self, views):
+#     sublime.message_dialog('on_init event triggered')
 
 def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
     targetResName = pathlib.Path(uniqueResPath).name
@@ -231,6 +239,17 @@ def plugin_loaded(removeSettingsCB=False, factoryReset=False):
     global activeSettings
     global srSettings
 
+    pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
+    sys.path.insert(0, pc_package_path)
+    from package_control import events
+    # sys.path.remove(pc_package_path)
+    print('have imported OK for loaded')
+    print('package control events status: {}'.format(events._tracker))
+    if events.install(plugin_canon_name):
+        print('Installed {}'.format(events.install(plugin_canon_name)))
+    elif events.post_upgrade(plugin_canon_name):
+        print('Upgraded to {}'.format(events.post_upgrade(plugin_canon_name)))
+
     def readInUserSettings():
         global activeSettings
         global srSettings
@@ -290,6 +309,17 @@ def plugin_loaded(removeSettingsCB=False, factoryReset=False):
     srSettings.add_on_change('callBackKey', readInUserSettings)
 
 def plugin_unloaded():
+    pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
+    sys.path.insert(0, pc_package_path)
+    from package_control import events
+    sys.path.remove(pc_package_path)
+    print('have imported OK for UNloaded')
+    print('package control events status: {}'.format(events._tracker))
+    if events.remove(plugin_canon_name):
+        print('Removing package {}'.format(events.remove(plugin_canon_name)))
+    elif events.pre_upgrade(plugin_canon_name):
+        print('About to upgrade pkg to {}'.format(events.pre_upgrade(plugin_canon_name)))
+
     plugin_loaded(removeSettingsCB=True)
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):

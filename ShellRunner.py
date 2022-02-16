@@ -23,16 +23,24 @@ templateSubDir = "configTemplates"
 outputToValues = ['newTab', 'sublConsole', 'cursorInsert', 'msgBox', 'clip', None]
 outputToJsonKeyStr = str(outputToValues).replace('None', 'null')
 
-
-plugin_loose_pkg_dir = pathlib.Path(sublime.packages_path()) / plugin_canon_name 
-initFiles['settings'] = initFileInfo(plugin_loose_pkg_dir / "ShellRunner.sublime-settings",
-                                       "settings/ShellRunnerExample.sublime-settings",
+curPlatform = sublime.platform()
+if curPlatform == "osx":
+    curPlatform = "OSX"
+else:
+    curPlatform = curPlatform.capitalize()
+sublime_user_dir = pathlib.Path(sublime.packages_path()) / "User"
+shellrunner_user_dir = sublime_user_dir / "ShellRunner"
+initFiles['settings'] = initFileInfo(sublime_user_dir / "ShellRunner.sublime-settings",
+                                       "ShellRunner.sublime-settings",
                                        "{}")
-initFiles['sideBarMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Side Bar.sublime-menu",
-                                             "menus/userFreshInit/ShellRunnerSideBar.sublime-menu-startup",
+initFiles['sideBarMenu'] = initFileInfo(sublime_user_dir / "ShellRunner" / "Side Bar.sublime-menu",
+                                             "menus/userFreshInit/ShellRunner({})SideBar.sublime-menu-startup".format(curPlatform),
                                              "[]")
-initFiles['contextMenu'] = initFileInfo(plugin_loose_pkg_dir / "menus" / "userVariants" / "Context.sublime-menu",
-                                             "menus/userFreshInit/ShellRunnerContext.sublime-menu-startup",
+initFiles['contextMenu'] = initFileInfo(sublime_user_dir / "ShellRunner" / "Context.sublime-menu",
+                                             "menus/userFreshInit/ShellRunner({})Context.sublime-menu-startup".format(curPlatform),
+                                             "[]")
+initFiles['keyMap'] = initFileInfo(sublime_user_dir / "ShellRunner" / "Default ({}).sublime-keymap".format(curPlatform),
+                                             "keymaps/userFreshInit/ShellRunner({}).keymap-startup".format(curPlatform),
                                              "[]")
 
 srSettings = {}
@@ -157,16 +165,18 @@ def setupConfigFileFramework(factoryReset=False):
     """
     global initFiles
 
-    # Ensure set up of 3x config files in 'loose package dir':
+    # Ensure set up of 4x config files in sublime user dir:
     # `- copy 'template' version to 'user' version
     #    unless 'user' version exists or factoryReset=True
-    global plugin_loose_pkg_dir
-    menusDir = plugin_loose_pkg_dir / "menus" / "userVariants"
-    if not menusDir.is_dir():
-        menusDir.mkdir(parents=True)
+    global sublime_user_dir
+    global shellrunner_user_dir
+    # menusDir = plugin_loose_pkg_dir / "menus" / "userVariants"
+    # menusDir = sublime_user_dir / "User/ShellRunner"
+    if not shellrunner_user_dir.is_dir():
+        shellrunner_user_dir.mkdir(parents=True)
 
     for key, trisomy in initFiles.items():
-        target = plugin_loose_pkg_dir / trisomy.filePath
+        target = trisomy.filePath
         if not target.is_file() or factoryReset:
             template = loadPkgResource(trisomy.templateFromPackage, trisomy.templateDefaultStr)
             print("writing new: {}".format(str(target)))
@@ -179,7 +189,7 @@ def setupConfigFileFramework(factoryReset=False):
 
 class FactoryResetCommand(sublime_plugin.WindowCommand):
     def run(self):
-        global plugin_loose_pkg_dir
+        global sublime_user_dir
         ans = sublime.ok_cancel_dialog(
             "Do you really want to perform a factory reset?\n\n"
             "This will erase all {} user settings you have implemented, "
@@ -192,7 +202,7 @@ class FactoryResetCommand(sublime_plugin.WindowCommand):
         # reset our activeSettings back to the defaults
         for key, value in activeSettings.items():
             activeSettings[key]['usr'] = activeSettings[key]['def']
-        for p in plugin_loose_pkg_dir.glob("*.sublime-keymap"):
+        for p in sublime_user_dir.glob("*.sublime-keymap"):
             # print('removing {}'.format(str(p)))
             p.unlink()
         plugin_loaded(factoryReset=True)
@@ -213,11 +223,12 @@ def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
         else:
             consoleWarn("Unknown setting [{}] in {} (Ignored)".format(k, projectFileName))
 
-def plugin_loaded(factoryReset=False):
+def plugin_loaded(removeSettingsCB=False, factoryReset=False):
     """
     1. Sets up global: configFile dictionary + ensures necessary config files are in place
     2. Loads initial set of ShellRunner settings into global: activeSettings dictionary
     """
+    global activeSettings
     global srSettings
 
     def readInUserSettings():
@@ -239,6 +250,10 @@ def plugin_loaded(factoryReset=False):
                 settingsUpdateByProject(proj_plugin_settings, sublime.active_window().project_file_name())
         print('active settings after change trigger fn: {}'.format(activeSettings))
 
+    if removeSettingsCB:
+        srSettings.clear_on_change('callBackKey')
+        print('callback removed')
+        return
 
     # Step A:
     setupConfigFileFramework(factoryReset=factoryReset)
@@ -250,23 +265,24 @@ def plugin_loaded(factoryReset=False):
     #       ShellRunner's functions read settings directly from 'activeSettings'
 
 
-    for i in range(1,4):
-        foundList = sublime.find_resources('ShellRunner.sublime-settings')
-        print('found settings resources: {}'.format(foundList))
-        srSettings = sublime.load_settings('ShellRunner.sublime-settings')
-        print ('type of settings obj: {}'.format(type(srSettings)))
-        if not srSettings.to_dict():
-            print('delay/retry as no settings')
-            time.sleep(0.2)
-        else:
-            print("we have settings on go {}".format(i))
-            break
-    print('settings obj: {}'.format(srSettings.to_dict()))
+    srSettings = sublime.load_settings('ShellRunner.sublime-settings')
+    # for i in range(1,4):
+    #     foundList = sublime.find_resources('ShellRunner.sublime-settings')
+    #     print('found settings resources: {}'.format(foundList))
+    #     srSettings = sublime.load_settings('ShellRunner.sublime-settings')
+    #     print ('type of settings obj: {}'.format(type(srSettings)))
+    #     if not srSettings.to_dict():
+    #         print('delay/retry as no settings')
+    #         time.sleep(0.2)
+    #     else:
+    #         print("we have settings on go {}".format(i))
+    #         break
+    # print('settings obj: {}'.format(srSettings.to_dict()))
     # Step C: Populate global 'activeSettings'
     #      `- First from any ShellRunner.sublime-settings file(s)
     #         Second (and overridingly) from any 'ShellRunner' section of the active 'sublime-project' file   
     readInUserSettings()
-    print('active settings just before callback is set: {}'.format(activeSettings))
+    # print('active settings just before callback is set: {}'.format(activeSettings))
     # Step D: Activate a listener for changes to the ShellRunner.sublime-settings file(s)
     #      `- Note: A listener for changes to the active 'sublime-project' file is implemented
     #            `- via a separate EventListener Class (ProjectSettingsUpdateListener)
@@ -274,9 +290,7 @@ def plugin_loaded(factoryReset=False):
     srSettings.add_on_change('callBackKey', readInUserSettings)
 
 def plugin_unloaded():
-    global srSettings
-    srSettings.clear_on_change('callBackKey')
-    # print('running plugin unloaded')
+    plugin_loaded(removeSettingsCB=True)
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):
@@ -287,8 +301,8 @@ class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
 
 
 def editConfigFile(userFile, relBaseFile, thisWindow):
-    args = {"base_file": "${packages}/ShellRunner/" + relBaseFile,
-            "user_file": userFile,
+    args = {"user_file": userFile,
+            "base_file": "${packages}/ShellRunner/" + relBaseFile,
             }
     thisWindow.run_command('edit_settings', args)
 
@@ -296,21 +310,27 @@ def editConfigFile(userFile, relBaseFile, thisWindow):
 class EditShellrunnerSidebarCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
         editConfigFile(str(initFiles['sideBarMenu'].filePath),
-                    "menus/exampleCommands/ShellRunnerExampleSideBar.sublime-menu",
+                    "menus/exampleBase/ShellRunner({})ExampleSideBar.sublime-menu".format(curPlatform),
                     self.window)
 
 
 class EditShellrunnerContextCommandsCommand(sublime_plugin.WindowCommand):
     def run(self):
         editConfigFile(str(initFiles['contextMenu'].filePath),
-                    "menus/exampleCommands/ShellRunnerExampleContext.sublime-menu",
+                    "menus/exampleBase/ShellRunner({})ExampleContext.sublime-menu".format(curPlatform),
                     self.window)
 
 
 class EditShellrunnerSettingsCommand(sublime_plugin.WindowCommand):
     def run(self):
         editConfigFile(str(initFiles['settings'].filePath),
-                    "settings/ShellRunnerExample.sublime-settings",
+                    "ShellRunner.sublime-settings",
+                    self.window)
+
+class EditShellrunnerKeybindCommandsCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        editConfigFile(str(initFiles['keyMap'].filePath),
+                    "keymaps/exampleBase/Example({}).sublime-keymap".format(curPlatform),
                     self.window)
 
 class SidebarEditMenuViewabilityCommand(sublime_plugin.WindowCommand):

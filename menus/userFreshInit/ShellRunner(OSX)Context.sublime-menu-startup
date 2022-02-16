@@ -1,0 +1,19 @@
+[{"id" : "shell_runner_context_commands_parent", "children": [
+	{"caption": "-", "id": "shell_runner_context_commands_below_here"},
+	// Insert custom context menu commands here.
+	// See -> Command Palette: ShellRunner README for shellCommand syntax details
+	// For example:
+    {
+		"caption":	"ShellRunner Context Menu Command Demo",
+		"command":	"window_shellrunner_text_command",
+		"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Hello ${platform} Sublime Text user.; ",
+										"printf \"Welcome to some ShellRunner plugin functionality.\n\n\";",
+										"printf \"You should now comment out this demo command \";",
+										"printf \"and set about configuring ShellRunner to meet your needs (\";",
+										"printf \"configuration instructions can be found in the ShellRunner README \";",
+										"printf \", which is available via the Sublime Text command palette).\";",
+										"'"],
+				 	"outputTo": "msgBox", 
+				}
+	},
+]}]

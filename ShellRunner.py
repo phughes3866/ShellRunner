@@ -49,9 +49,11 @@ initFiles['keyMap'] = initFileInfo(sublime_user_dir / "ShellRunner" / "Default (
 srSettings = {}
 
 
-# class TestingListener(sublime_plugin.EventListener):
-#   def on_init(self, views):
-#     sublime.message_dialog('on_init event triggered')
+class TestingListener(sublime_plugin.EventListener):
+    def on_init(self, views):
+        print('on_init event triggered')
+    def on_post_save_async(self, view):
+        print('on_save event triggered file: {}'.format(view.file_name()))
 
 def loadPkgResource(uniqueResPath, default=None, tryTimes=1):
     targetResName = pathlib.Path(uniqueResPath).name

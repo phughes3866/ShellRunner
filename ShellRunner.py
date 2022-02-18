@@ -154,6 +154,17 @@ def getGlobalSetting(settingName, defaultGlobalFallback=True, finalResortVal=Non
 def consoleWarn(warnMsg):
     print("{} Warning: {}".format(plugin_canon_name, warnMsg))
 
+def makeUserFilesDormant(undo=False):
+    for key, trisomy in initFiles.items():
+        UF = trisomy.filePath
+        dormantUF = pathlib.Path(str(UF)+'.dormant')
+        if undo:
+            if dormantUF.is_file():
+                dormantUF.rename(UF)
+        else:
+            if UF.is_file():
+                UF.rename(dormantUF)
+
 def setupConfigFileFramework(factoryReset=False):
     """
     4 user manipulable config files can exist in the ${packages}/ShellRunner directory
@@ -233,7 +244,7 @@ def settingsUpdateByProject(projectFileShellRunnerSectionDict, projectFileName):
         else:
             consoleWarn("Unknown setting [{}] in {} (Ignored)".format(k, projectFileName))
 
-def plugin_loaded(removeSettingsCB=False, factoryReset=False):
+def plugin_loaded(factoryReset=False):
     """
     1. Sets up global: configFile dictionary + ensures necessary config files are in place
     2. Loads initial set of ShellRunner settings into global: activeSettings dictionary
@@ -241,16 +252,16 @@ def plugin_loaded(removeSettingsCB=False, factoryReset=False):
     global activeSettings
     global srSettings
 
-    pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
-    sys.path.insert(0, pc_package_path)
-    from package_control import events
-    # sys.path.remove(pc_package_path)
-    print('have imported OK for loaded')
-    print('package control events status: {}'.format(events._tracker))
-    if events.install(plugin_canon_name):
-        print('Installed {}'.format(events.install(plugin_canon_name)))
-    elif events.post_upgrade(plugin_canon_name):
-        print('Upgraded to {}'.format(events.post_upgrade(plugin_canon_name)))
+    # pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
+    # sys.path.insert(0, pc_package_path)
+    # from package_control import events
+    # # sys.path.remove(pc_package_path)
+    # print('have imported OK for loaded')
+    # print('package control events status: {}'.format(events._tracker))
+    # if events.install(plugin_canon_name):
+    #     print('Installed {}'.format(events.install(plugin_canon_name)))
+    # elif events.post_upgrade(plugin_canon_name):
+    #     print('Upgraded to {}'.format(events.post_upgrade(plugin_canon_name)))
 
     def readInUserSettings():
         global activeSettings
@@ -271,11 +282,12 @@ def plugin_loaded(removeSettingsCB=False, factoryReset=False):
                 settingsUpdateByProject(proj_plugin_settings, sublime.active_window().project_file_name())
         print('active settings after change trigger fn: {}'.format(activeSettings))
 
-    if removeSettingsCB:
-        srSettings.clear_on_change('callBackKey')
-        print('callback removed')
-        return
+    # if removeSettingsCB:
+    #     srSettings.clear_on_change('callBackKey')
+    #     print('callback removed')
+    #     return
 
+    makeUserFilesDormant(undo=True)
     # Step A:
     setupConfigFileFramework(factoryReset=factoryReset)
 
@@ -311,18 +323,21 @@ def plugin_loaded(removeSettingsCB=False, factoryReset=False):
     srSettings.add_on_change('callBackKey', readInUserSettings)
 
 def plugin_unloaded():
-    pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
-    sys.path.insert(0, pc_package_path)
-    from package_control import events
-    sys.path.remove(pc_package_path)
-    print('have imported OK for UNloaded')
-    print('package control events status: {}'.format(events._tracker))
-    if events.remove(plugin_canon_name):
-        print('Removing package {}'.format(events.remove(plugin_canon_name)))
-    elif events.pre_upgrade(plugin_canon_name):
-        print('About to upgrade pkg to {}'.format(events.pre_upgrade(plugin_canon_name)))
+    global srSettings
+    # pc_package_path = os.path.join(sublime.installed_packages_path(), u'Package Control.sublime-package')
+    # sys.path.insert(0, pc_package_path)
+    # from package_control import events
+    # sys.path.remove(pc_package_path)
+    # print('have imported OK for UNloaded')
+    # print('package control events status: {}'.format(events._tracker))
+    # if events.remove(plugin_canon_name):
+    #     print('Removing package {}'.format(events.remove(plugin_canon_name)))
+    # elif events.pre_upgrade(plugin_canon_name):
+    #     print('About to upgrade pkg to {}'.format(events.pre_upgrade(plugin_canon_name)))
 
-    plugin_loaded(removeSettingsCB=True)
+    srSettings.clear_on_change('callBackKey')
+    # plugin_loaded(removeSettingsCB=True)
+    makeUserFilesDormant()
 
 class ProjectSettingsUpdateListener(sublime_plugin.EventListener):
     def on_load_project(self, window):

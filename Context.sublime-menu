@@ -1,13 +1,12 @@
 [
-	{   "id": "shell_runner_context_menu", "caption": "-" },
-	{
-		"caption": "Open Terminal Here",
-		"command": "window_open_terminal_here",
-	},
+	// {   "id": "shell_runner_context_menu",
+	// 	"command": "context_menu_visability_control",
+	// 	"caption": "-",
+	// },
 	{
 		"id" : "shell_runner_context_commands_parent",
+		"command": "context_menu_visability_control",
 		"caption": "ShellRunner Commands",
-		"command" : "context_edit_menu_viewability",
 		"children": [
 			{
 				"caption": "Edit Context Menu Shell Commands…",

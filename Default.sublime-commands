@@ -1,0 +1,56 @@
+[
+    {
+        "caption": "Preferences: Shell Runner Settings",
+        "command": "edit_settings",
+        "args":
+        {
+            "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
+            "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
+        }
+    },
+	{
+	    "caption": "Preferences: Key Bindings",
+	    "command": "edit_settings", "args":
+        {
+            "base_file": "${packages}/ShellRunner/keymaps/exampleBase/Example(${platform}).sublime-keymap",
+            "user_file": "${packages}/User/ShellRunner/Default (${platform}).sublime-keymap",
+            "default": "[\n\t$0\n]\n"
+        }
+    },
+	{
+	      "caption": "Preferences: Shell Runner Side Bar Menu",
+	      "command": "edit_shellrunner_sidebar_commands",
+	  },
+	{
+		"caption": "Preferences: Shell Runner Context Menu",
+		"command": "edit_shellrunner_context_commands",
+	  },
+	{
+	      "caption": "Shell Runner: README.md",
+	      "command": "open_file",
+	      "args":
+	      {
+	        "file": "${packages}/ShellRunner/README.md",
+	      }
+	  },
+      {
+      	"caption": "Shell Runner: Construct A Command",
+  		"command":	"shell_runner_build_command",
+  		// "args":	{	
+  		// 	// "shellCommand": ["/usr/bin/bash -c 'echo Hello ${platform} Sublime Text user.; ",
+  		// 	// 							"printf \"Welcome to some ShellRunner plugin functionality.\n\n\";",
+  		// 	// 							"printf \"You should now comment out this demo command \";",
+  		// 	// 							"printf \"and set about configuring ShellRunner to meet your needs (\";",
+  		// 	// 							"printf \"configuration instructions can be found in the ShellRunner README \";",
+  		// 	// 							"printf \", which is available via the Sublime Text command palette).\";",
+  		// 	// 							"'"],
+  		// 		 	"outputTo": "msgBox", 
+  		// 		}
+  	},
+	// {
+	//       "caption": "Shell Runner: Build Text Capture Command",
+	//       "command": "shell_runner_capture_text_command",
+	//       "args":
+	//       {}
+	//   },
+]

@@ -81,7 +81,7 @@
 	// 			 	"outputTo": [ "clip", "newTab"],
 	// 			 	"outputTabName": "ShellRunner Demo",
 	// 			 	"consoleDebug": true,
-	// 				"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
+	// 				"cmdTimeout": 10, // 10 seconds is the default if this var is not specified
 	// 			}
 	// },
 	// {

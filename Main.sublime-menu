@@ -15,12 +15,11 @@
                         [
                         	{
                         	      "caption": "Settings",
-                        	      "command": "edit_shellrunner_settings"
-                        	      // , "args":
-                        	      // {
-                        	      //     "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
-                        	      //     "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
-                        	      // }
+                        	      "command": "edit_settings", "args":
+                        	      {
+                        	          "base_file": "${packages}/ShellRunner/ShellRunner.sublime-settings",
+                        	          "default": "// ShellRunner plugin: user defined settings\n{\n\t$0\n}\n"
+                        	      }
                         	  },
                         	{
                         	    "caption": "Side Bar Menu",
@@ -32,14 +31,13 @@
                         	  },
                         	{
                         	    "caption": "Key Bindings",
-                        	    "command": "edit_shellrunner_keybind_commands",
-                                // "args":
-                                // {
-                                //     "base_file": "${packages}/ShellRunner/keymaps/Example(${platform}).sublime-keymap",
-                                //     "user_file": "${packages}/ShellRunner/Default (${platform}).sublime-keymap",
-                                //     "default": "[\n\t$0\n]\n"
-                                // }
-                        	  },
+                        	    "command": "edit_settings", "args":
+                                {
+                                    "base_file": "${packages}/ShellRunner/keymaps/exampleBase/Example(${platform}).sublime-keymap",
+                                    "user_file": "${packages}/User/ShellRunner/Default (${platform}).sublime-keymap",
+                                    "default": "[\n\t$0\n]\n"
+                                }
+                    	    },
                         ]
                     }
                 ]

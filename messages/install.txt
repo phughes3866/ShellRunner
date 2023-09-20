@@ -20,8 +20,6 @@ ShellRunner enables Sublime Text users to run user defined shell commands from t
 
 A wide variety of substitution variables are available for building the shell commands, thus enabling aspects of Sublime Text to easily be used e.g. ${selText}, ${folder}, ${file}. ShellRunner also allows for shell environment variables to be erased, added or changed for the new command environment.
 
-As a separate feature to the 'command-running' commands ShellRunner has an 'Open Terminal Here' command, which can be configured to be displayed in the sidebar, tab and context menus. The 'Open Terminal Here' command opens a terminal emulator of your choice in a new window.
-
 FOR MORE INFORMATION AND DETAILS ON CONFIGURING SHELLRUNNER, ACCESS THE README FILE::
 
 Via the command palette: <Ctrl-Alt-P> 'ShellRunner README'

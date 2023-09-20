@@ -23,7 +23,7 @@
 										"printf \"configuration instructions can be found in the ShellRunner README \";",
 										"printf \", which is available via the Sublime Text command palette).\";",
 										"'"],
-				 	"outputTo": "msgBox", 
+				 	"outputTo": ["msgBox"], 
 				}
 	},
 
@@ -62,7 +62,7 @@
 	// 									"echo You can probably guess where the text goes for each of these settings.; ",
 	// 									"echo \"(ctrl-Z will work to undo this demo text insertion)\"; ",
 	// 									"printf \"=%.0s\" {1..76}; printf \"\n\n\"'"],
-	// 			 	"outputTo": "cursorInsert",
+	// 			 	"outputTo": ["cursorInsert"],
 	// 			 	"initChangeDir": false,
 	// 			}
 	// },
@@ -72,7 +72,7 @@
 	// 	"args":	{	"shellCommand": ["/usr/bin/bash -c 'echo Commands ordinarily fail on non-zero shell ",
 	// 								"exit.; echo But with textCmdStopOnErr false, ",
 	// 								"we do not fail.; printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}; exit 77;'"],
-	// 			 	"outputTo": "newTab",
+	// 			 	"outputTo": ["newTab"],
 	// 			 	"outputTabName": "ShellRunner Demo",
 	// 			 	"textCmdStopOnErr": false,
 	// 			}
@@ -84,7 +84,7 @@
 	// 								" echo [this is stdout text] ; echo [this is stderr text] 1>&2 ; ",
 	// 								"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand}'"],
 	// 			 	"cmdCombineOutputStreams": true,
-	// 			 	"outputTo": "newTab",
+	// 			 	"outputTo": ["newTab"],
 	// 			 	"outputTabName": "ShellRunner Demo",
 	// 			}
 	// },
@@ -95,7 +95,7 @@
 	// 			 	"outputTo": [ "clip", "newTab"],
 	// 			 	"outputTabName": "ShellRunner Demo",
 	// 			 	"consoleDebug": true,
-	// 				"textCmdTimeout": 10, // 10 seconds is the default if this var is not specified
+	// 				"cmdTimeout": 10, // 10 seconds is the default if this var is not specified
 	// 			}
 	// },
 	// {
@@ -111,7 +111,7 @@
 	// 	"caption":	"txt: cat sidebar selected file(s) to new tab",
 	// 	"command":	"sidebar_shellrunner_text_command",
 	// 	"args":	{	"shellCommand": "/usr/bin/bash -c \"cat ${files}\"",
-	// 				"outputTo": "newTab",
+	// 				"outputTo": ["newTab"],
 	// 			 	"outputTabName": "ShellRunner Demo",
 	// 				"files": [],
 	// 			}
@@ -125,7 +125,7 @@
 	// 								"echo \"The above PWD outputs are the same as they were both replaced at command build time, i.e. pre-shell\"; ",
 	// 								"echo \"Working Dir (as expanded by shell) (PWD) = \\${PWD} (this now correctly shows the root dir)\";",
 	// 								"printf -- \"\n\nThis output came from the following shellCommand:\n%s\" ${shellCommand};'"],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 				// "tabDebugReport": true,
 	// 				"extraCmdSubstVars": 	{ 	"featureA"		:	"use shell environment vars at command build time",
 	// 											"featureB"		:	"(when they're escaped), leave expansion of environment vars to the shell at run time"
@@ -143,7 +143,7 @@
 	// 								"echo Here [\\${MOMENTOUS}] is in-shell expanded; ",
 	// 								"echo Note: Leave var expansion to the shell with double backslash; echo;",
 	// 								"echo Currently, as we have cleared the ENV, we only have a few env vars. Here they are::; env'"],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 				"cleanShellEnv": true,
 	// 				"extraCmdShellEnvVars":	{ 	"INTO_ENV"	:	"With the shell env cleared we have no HOME dir.",
 	// 											"MOMENTOUS"	:	"DIOGENES"
@@ -200,7 +200,7 @@
 	// 		                         "\\${file}: ${file}\n",
 	// 		                         "\\${file_path}: ${file_path}'",
 	// 			                     ],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -211,7 +211,7 @@
 	// 		                         "\\${file_base_name}: ${file_base_name}\n",
 	// 		                         "\\${project_extension}: ${project_extension}'",
 	// 			                     ],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -222,7 +222,7 @@
 	// 		                         "\\${folder}: ${folder}\n",
 	// 		                         "\\${project}: ${project}'",
 	// 			                     ],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -233,7 +233,7 @@
 	// 		                         "\\${project_name}: ${project_name}\n",
 	// 		                         "\\${project_base_name}: ${project_base_name}'",
 	// 			                     ],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -246,7 +246,7 @@
 	// 		                         "(strings are empty if data is unavailable)'",
 	// 			                     ],
 	// 				"files": [],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -259,7 +259,7 @@
 	// 		                         "(strings are empty if data is unavailable)'",
 	// 			                     ],
 	// 				"dirs": [],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 	// {
@@ -272,7 +272,7 @@
 	// 		                         "(strings are empty if data is unavailable)'",
 	// 			                     ],
 	// 				"paths": [],
-	// 				"outputTo": "msgBox",
+	// 				"outputTo": ["msgBox"],
 	// 			}
 	// },
 ]}]

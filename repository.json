@@ -1,0 +1,13 @@
+{
+	"packages": [
+		{
+			"details": "https://github.com/phughes3866/ShellRunner",
+			"releases": [
+				{
+					"sublime_text": ">=3000",
+					"tags": true
+				}
+			]
+		}
+	]
+}
